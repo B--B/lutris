@@ -14,7 +14,11 @@ def _is_system_dark_by_default():
 
 class InterfacePreferencesBox(BaseConfigBox):
     settings_options = [
-        {"option": "hide_client_on_game_start", "label": _("Minimize client when a game is launched"), "type": "bool"},
+        {
+            "option": "hide_client_on_game_start",
+            "label": _("Minimize client when a game is launched"),
+            "type": "bool"
+        },
         {"option": "hide_text_under_icons", "label": _("Hide text under icons"), "type": "bool"},
         {
             "option": "hide_badges_on_icons",
@@ -22,7 +26,18 @@ class InterfacePreferencesBox(BaseConfigBox):
             "type": "bool",
             "accelerator": "<Primary>p",
         },
-        {"option": "show_tray_icon", "label": _("Show Tray Icon"), "type": "bool", "visible": supports_status_icon},
+        {
+            "option": "show_tray_icon",
+            "label": _("Show Tray Icon"),
+            "type": "bool",
+            "visible": supports_status_icon
+        },
+        {
+            "option": "hide_client_on_start",
+            "label": _("Start Lutris minimized"),
+            "type": "bool",
+            "visible": supports_status_icon
+        },
         {
             "option": "discord_rpc",
             "label": _("Enable Discord Rich Presence for Available Games"),
@@ -44,6 +59,7 @@ class InterfacePreferencesBox(BaseConfigBox):
     def __init__(self, accelerators):
         super().__init__()
         self.accelerators = accelerators
+        self.rows = {}
         self.add(self.get_section_label(_("Interface options")))
         frame = Gtk.Frame(visible=True, shadow_type=Gtk.ShadowType.ETCHED_IN)
         listbox = Gtk.ListBox(visible=True)
@@ -71,6 +87,42 @@ class InterfacePreferencesBox(BaseConfigBox):
                 list_box_row.set_activatable(False)
                 list_box_row.add(widget)
                 listbox.add(list_box_row)
+
+            if option_dict["option"] == "hide_client_on_start":
+                self.rows["hide_client_row"] = list_box_row
+                self.rows["hide_client_switch"] = widget.get_children()[1]
+            elif option_dict["option"] == "show_tray_icon":
+                self.rows["show_tray_icon_switch"] = widget.get_children()[1]
+                self.rows["show_tray_icon_switch"].connect(
+                    "notify::active",
+                    self.on_tray_icon_switch_toggled
+                )
+
+        self.update_hide_client_row_status()
+
+    def on_tray_icon_switch_toggled(self, _switch, _param):
+        """Action triggered on switch 'active' signal."""
+        self.update_hide_client_row_status()
+
+    def update_hide_client_row_status(self):
+        """Dinamically update hide client status"""
+        if "show_tray_icon_switch" in self.rows:
+            tray_icon_enabled = (
+                self.rows["show_tray_icon_switch"].get_active()
+            )
+
+            if (
+                "hide_client_row" in self.rows
+                and "hide_client_switch" in self.rows
+            ):
+                # Disable hide_client_on_start if user disable show_tray_icon
+                if (
+                    not tray_icon_enabled
+                    and self.rows["hide_client_switch"].get_active()
+                ):
+                    self.rows["hide_client_switch"].set_active(False)
+                # Dinamically set hide_client_on_start status
+                self.rows["hide_client_row"].set_sensitive(tray_icon_enabled)
 
     def _create_bool_setting(self, option, label, accelerator=None, **kwargs):
         return self.get_setting_box(option, label, accelerator=accelerator)
