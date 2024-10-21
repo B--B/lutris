@@ -771,6 +771,9 @@ class Application(Gtk.Application):
             self.start_runtime_updates()
             # If the Lutris GUI is started by itself, don't quit it when a game stops
             self.quit_on_game_exit = False
+            # Minimize Lutris if user enabled the option
+            if self.can_start_hidden():
+                self.window.hide()
         return 0
 
     def on_settings_changed(self, setting_key, new_value):
@@ -1063,3 +1066,11 @@ Also, check that the version specified is in the correct format.
 
     def has_tray_icon(self):
         return self.tray and self.tray.is_visible()
+
+    def can_start_hidden(self):
+        """Check that Lutris can safely start hidden"""
+        tray_icon = settings.read_bool_setting("show_tray_icon", False)
+        hide_client = settings.read_bool_setting("hide_client_on_start", False)
+        if tray_icon and hide_client:
+            return True
+        return False
