@@ -291,7 +291,7 @@ class FileChooserEntry(Gtk.Box):
         path = original_path.strip("\r\n")
 
         if path.startswith("file:///"):
-            path = urllib.parse.unquote(path[len("file://") :])
+            path = urllib.parse.unquote(path[len("file://"):])
 
         path = os.path.expanduser(path)
 

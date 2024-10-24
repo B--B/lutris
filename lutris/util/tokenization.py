@@ -74,7 +74,7 @@ def tokenize_search(text: str, isolated_tokens: Iterable[str]) -> List[str]:
                                 tokens[token_index] = token[:char_index]
                                 token_index += 1
                                 tokens.insert(token_index, candidate)
-                                token = token[(char_index + len(candidate)) :]
+                                token = token[(char_index + len(candidate)):]
                                 token_index += 1
                                 tokens.insert(token_index, token)
                                 char_index = -1  # start again with reduced token!

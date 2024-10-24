@@ -342,7 +342,7 @@ def binary_loads(s, mapper=dict, merge_duplicate_keys=True, alt_format=False):
     CURRENT_BIN_END = BIN_END if not alt_format else BIN_END_ALT
 
     while len(s) > idx:
-        t = s[idx : idx + 1]
+        t = s[idx: idx + 1]
         idx += 1
 
         if t == CURRENT_BIN_END:

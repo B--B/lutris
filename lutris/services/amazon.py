@@ -490,12 +490,12 @@ class AmazonService(OnlineService):
         header_size = struct.unpack(">I", content[:4])[0]
 
         header = ManifestHeader()
-        header.decode(content[4 : 4 + header_size])
+        header.decode(content[4: 4 + header_size])
 
         if header.compression.algorithm == CompressionAlgorithm.none:
-            raw_manifest = content[4 + header_size :]
+            raw_manifest = content[4 + header_size:]
         elif header.compression.algorithm == CompressionAlgorithm.lzma:
-            raw_manifest = lzma.decompress(content[4 + header_size :])
+            raw_manifest = lzma.decompress(content[4 + header_size:])
         else:
             logger.error("Unknown compression algorithm found in manifest")
             raise UnavailableGameError(_("Unknown compression algorithm found in manifest"))
@@ -532,7 +532,7 @@ class AmazonService(OnlineService):
         def get_batches(to_batch, batch_size):
             i = 0
             while i < len(to_batch):
-                yield to_batch[i : i + batch_size]
+                yield to_batch[i: i + batch_size]
                 i += batch_size
 
         batches = get_batches(file_list, 500)

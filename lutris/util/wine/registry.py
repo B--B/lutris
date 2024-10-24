@@ -130,9 +130,9 @@ class WineRegistry:
                     current_key.parse(line)
                 add_next_to_value = line.endswith("\\")
             elif line.startswith(self.version_header):
-                self.version = int(line[len(self.version_header) :])
+                self.version = int(line[len(self.version_header):])
             elif line.startswith(self.relative_to_header):
-                self.relative_to = line[len(self.relative_to_header) :]
+                self.relative_to = line[len(self.relative_to_header):]
             elif line.startswith("#arch"):
                 self.arch = line.split("=")[1]
 

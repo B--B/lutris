@@ -337,7 +337,7 @@ class GridViewCellRendererImage(Gtk.CellRenderer):
                 data = surface.get_data()
 
                 offset = (y * stride) + x * 4
-                pixel = data[offset : offset + 4]
+                pixel = data[offset: offset + 4]
 
                 for channel in pixel:
                     if channel < 128:

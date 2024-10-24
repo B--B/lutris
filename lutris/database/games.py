@@ -76,7 +76,7 @@ def get_games_by_ids(game_ids):
     return list(
         chain.from_iterable(
             [
-                get_games_where(id__in=list(game_ids)[page * size : page * size + size])
+                get_games_where(id__in=list(game_ids)[page * size: page * size + size])
                 for page in range(math.ceil(len(game_ids) / size))
             ]
         )

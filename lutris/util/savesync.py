@@ -68,7 +68,7 @@ class SaveInfo:
             path_files[os.path.basename(path)] = os.stat(path)
             return path_files
         for root, _dirs, files in os.walk(path):
-            basedir = root[len(path) + 1 :]
+            basedir = root[len(path) + 1:]
             for path_file in files:
                 path_files[os.path.join(basedir, path_file)] = os.stat(os.path.join(root, path_file))
         return path_files
@@ -219,7 +219,7 @@ def upload_save(game, sections=None):
     basepath = save_files["saves"]["path"]
     if os.path.isfile(basepath):
         basepath = os.path.dirname(basepath)
-    relpath = basepath[len(save_files["basedir"]) + 1 :]
+    relpath = basepath[len(save_files["basedir"]) + 1:]
     create_dirs(client, os.path.join(save_dest_dir, relpath))
     for save_file in save_files["saves"]["files"]:
         upload_file_source = os.path.join(basepath, save_file["file"])

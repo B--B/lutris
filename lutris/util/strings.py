@@ -112,8 +112,8 @@ def parse_version(version: str) -> Tuple[List[int], str, str]:
     if not version_match:
         return [], "", ""
     version_number = version_match.groups()[0]
-    prefix = version[0 : version_match.span()[0]]
-    suffix = version[version_match.span()[1] :]
+    prefix = version[0: version_match.span()[0]]
+    suffix = version[version_match.span()[1]:]
     return [int(p) for p in version_number.split(".")], suffix, prefix
 
 

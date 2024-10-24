@@ -217,28 +217,28 @@ class UbisoftParser(object):
         data = self.settings_raw
         if data[global_offset] != 0:
             buffer = int(data[global_offset])
-            fav_records = data[global_offset + 1 : global_offset + buffer + 1]
+            fav_records = data[global_offset + 1:global_offset + buffer + 1]
         else:
             fav_records = []
 
         global_offset = len(fav_records) + 3
         if data[global_offset] != 0:
             buffer = int(data[global_offset])
-            hidden_records = data[global_offset + 1 : global_offset + buffer + 1]
+            hidden_records = data[global_offset + 1:global_offset + buffer + 1]
         else:
             hidden_records = []
 
         pos = 0
         while pos < len(fav_records):
             rec_size = fav_records[pos + 1] - 1
-            rec_data = fav_records[pos + 3 : pos + 3 + rec_size]
+            rec_data = fav_records[pos + 3:pos + 3 + rec_size]
             fav.add(get_game_id(rec_data, rec_size))
             pos += rec_size + 3
 
         pos = 0
         while pos < len(hidden_records):
             rec_size = hidden_records[pos + 1] - 1
-            rec_data = hidden_records[pos + 3 : pos + 3 + rec_size]
+            rec_data = hidden_records[pos + 3:pos + 3 + rec_size]
             hidden.add(get_game_id(rec_data, rec_size))
             pos += rec_size + 3
 
@@ -311,7 +311,7 @@ class UbisoftParser(object):
                 yield game
 
     def _parse_configuration_item(self, conf_item):
-        stream = self.configuration_raw[conf_item["offset"] : conf_item["offset"] + conf_item["size"]].decode(
+        stream = self.configuration_raw[conf_item["offset"]:conf_item["offset"] + conf_item["size"]].decode(
             "utf8", errors="ignore"
         )
         if stream and "start_game" in stream:
