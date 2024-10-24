@@ -12,7 +12,12 @@ from gi.repository import Gdk, Gtk
 from lutris import settings, sysoptions
 from lutris.config import LutrisConfig
 from lutris.game import Game
-from lutris.gui.widgets.common import EditableGrid, FileChooserEntry, Label, VBox
+from lutris.gui.widgets.common import (
+     EditableGrid,
+     FileChooserEntry,
+     Label,
+     VBox
+)
 from lutris.gui.widgets.searchable_combobox import SearchableCombobox
 from lutris.runners import InvalidRunnerError, import_runner
 from lutris.util.log import logger
@@ -51,8 +56,9 @@ class ConfigBox(VBox):
 
     @advanced_visibility.setter
     def advanced_visibility(self, value):
-        """Sets the visibility of every 'advanced' option and every section that
-        contains only 'advanced' options."""
+        """Sets the visibility of every 'advanced' option and every section
+        that contains only 'advanced' options.
+        """
         self._advanced_visibility = value
         self.update_option_visibility()
 
@@ -62,14 +68,16 @@ class ConfigBox(VBox):
 
     @filter.setter
     def filter(self, value):
-        """Sets the visibility of the options that have some text in the label or
-        help-text."""
+        """Sets the visibility of the options that have some text in the label
+        or help-text.
+        """
         self._filter = value
         self.update_option_visibility()
 
     def update_option_visibility(self):
-        """Recursively searches out all the options and shows or hides them according to
-        the filter and advanced-visibility settings."""
+        """Recursively searches out all the options and shows or hides them
+        according to the filter and advanced-visibility settings.
+        """
 
         def update_widgets(widgets):
             filter_text = self.filter.lower()
@@ -77,15 +85,26 @@ class ConfigBox(VBox):
             visible_count = 0
             for widget in widgets:
                 if isinstance(widget, ConfigBox.SectionFrame):
-                    frame_visible_count = update_widgets(widget.vbox.get_children())
+                    frame_visible_count = update_widgets(
+                        widget.vbox.get_children()
+                    )
                     visible_count += frame_visible_count
                     widget.set_visible(frame_visible_count > 0)
                 else:
-                    widget_visible = self.advanced_visibility or not widget.get_style_context().has_class("advanced")
-                    if widget_visible and filter_text and hasattr(widget, "lutris_option_label"):
+                    widget_visible = (
+                        self.advanced_visibility or not
+                        widget.get_style_context().has_class("advanced")
+                    )
+                    if widget_visible and filter_text and hasattr(
+                        widget,
+                        "lutris_option_label"
+                    ):
                         label = widget.lutris_option_label.lower()
                         helptext = widget.lutris_option_helptext.lower()
-                        if filter_text not in label and filter_text not in helptext:
+                        if (
+                            filter_text not in label
+                            and filter_text not in helptext
+                        ):
                             widget_visible = False
                     widget.set_visible(widget_visible)
                     widget.set_no_show_all(not widget_visible)
@@ -104,7 +123,10 @@ class ConfigBox(VBox):
         help_box.set_margin_right(15)
         help_box.set_margin_bottom(5)
 
-        icon = Gtk.Image.new_from_icon_name("dialog-information", Gtk.IconSize.MENU)
+        icon = Gtk.Image.new_from_icon_name(
+            "dialog-information",
+            Gtk.IconSize.MENU
+        )
         help_box.pack_start(icon, False, False, 5)
 
         title_label = Gtk.Label("<i>%s</i>" % text)
@@ -118,10 +140,13 @@ class ConfigBox(VBox):
 
         help_box.show_all()
 
-    def generate_widgets(self):  # noqa: C901 # pylint: disable=too-many-branches,too-many-statements
+    def generate_widgets(self):
         """Parse the config dict and generates widget accordingly."""
         if not self.options:
-            no_options_label = Label(_("No options available"), width_request=-1)
+            no_options_label = Label(
+                _("No options available"),
+                width_request=-1
+            )
             no_options_label.set_halign(Gtk.Align.CENTER)
             no_options_label.set_valign(Gtk.Align.CENTER)
             self.pack_start(no_options_label, True, True, 0)
@@ -144,7 +169,8 @@ class ConfigBox(VBox):
 
         # Go thru all options.
         for option in self.options:
-            option = option.copy()  # we will mutate this, so let's not alter the original
+            # we will mutate this, so let's not alter the original
+            option = option.copy()
 
             try:
                 if "scope" in option:
@@ -160,7 +186,10 @@ class ConfigBox(VBox):
                     if not option["visible"]:
                         continue
 
-                if callable(option.get("choices")) and option["type"] != "choice_with_search":
+                if (
+                    callable(option.get("choices"))
+                    and option["type"] != "choice_with_search"
+                ):
                     option["choices"] = option["choices"]()
                 if callable(option.get("condition")):
                     option["condition"] = option["condition"]()
@@ -183,18 +212,25 @@ class ConfigBox(VBox):
                 default = option.get("default")
                 if callable(default):
                     default = default()
-                self.tooltip_default = default if isinstance(default, str) else None
+                self.tooltip_default = (
+                    default if isinstance(default, str) else None
+                )
 
                 # Generate option widget
                 self.option_widget = None
                 self.call_widget_generator(option, option_key, value, default)
 
                 # Reset button
-                reset_btn = Gtk.Button.new_from_icon_name("edit-undo-symbolic", Gtk.IconSize.MENU)
+                reset_btn = Gtk.Button.new_from_icon_name(
+                    "edit-undo-symbolic",
+                    Gtk.IconSize.MENU
+                )
                 reset_btn.set_valign(Gtk.Align.CENTER)
                 reset_btn.set_margin_bottom(6)
                 reset_btn.set_relief(Gtk.ReliefStyle.NONE)
-                reset_btn.set_tooltip_text(_("Reset option to global or default config"))
+                reset_btn.set_tooltip_text(
+                    _("Reset option to global or default config")
+                )
                 reset_btn.connect(
                     "clicked",
                     self.on_reset_button_clicked,
@@ -220,11 +256,16 @@ class ConfigBox(VBox):
                 if value != default and option_key not in self.raw_config:
                     helptext = helptext + "\n\n" if helptext else ""
                     helptext += _(
-                        "<i>(Italic indicates that this option is " "modified in a lower configuration level.)</i>"
+                        "<i>(Italic indicates that this option is "
+                        "modified in a lower configuration level.)</i>"
                     )
                 if helptext:
                     self.wrapper.props.has_tooltip = True
-                    self.wrapper.connect("query-tooltip", self.on_query_tooltip, helptext)
+                    self.wrapper.connect(
+                        "query-tooltip",
+                        self.on_query_tooltip,
+                        helptext
+                    )
 
                 hbox = Gtk.Box(visible=True)
                 option_container = hbox
@@ -238,7 +279,10 @@ class ConfigBox(VBox):
 
                 if "warning" in option:
                     option_body = option_container
-                    option_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, visible=True)
+                    option_container = Gtk.Box(
+                        orientation=Gtk.Orientation.VERTICAL,
+                        visible=True
+                    )
                     option_container.pack_start(option_body, False, False, 0)
                     warning = ConfigWarningBox(option["warning"], option_key)
                     warning.update_warning(self.lutris_config)
@@ -247,9 +291,16 @@ class ConfigBox(VBox):
 
                 if "error" in option:
                     option_body = option_container
-                    option_container = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, visible=True)
+                    option_container = Gtk.Box(
+                        orientation=Gtk.Orientation.VERTICAL,
+                        visible=True
+                    )
                     option_container.pack_start(option_body, False, False, 0)
-                    error = ConfigErrorBox(option["error"], option_key, self.wrapper)
+                    error = ConfigErrorBox(
+                        option["error"],
+                        option_key,
+                        self.wrapper
+                    )
                     error.update_warning(self.lutris_config)
                     self.error_boxes[option_key] = error
                     option_container.pack_start(error, False, False, 0)
@@ -260,13 +311,22 @@ class ConfigBox(VBox):
 
                 option_container.lutris_option_key = option_key
                 option_container.lutris_option_label = option["label"]
-                option_container.lutris_option_helptext = option.get("help") or ""
+                option_container.lutris_option_helptext = (
+                    option.get("help") or ""
+                )
                 current_vbox.pack_start(option_container, False, False, 0)
             except Exception as ex:
-                logger.exception("Failed to generate option widget for '%s': %s", option.get("option"), ex)
+                logger.exception(
+                    "Failed to generate option widget for '%s': %s",
+                    option.get("option"),
+                    ex
+                )
         self.show_all()
 
-        show_advanced = settings.read_setting("show_advanced_options") == "True"
+        show_advanced = (
+            settings.read_setting("show_advanced_options")
+            == "True"
+        )
         self.advanced_visibility = show_advanced
 
     def update_warnings(self) -> None:
@@ -276,7 +336,7 @@ class ConfigBox(VBox):
         for box in self.error_boxes.values():
             box.update_warning(self.lutris_config)
 
-    def call_widget_generator(self, option, option_key, value, default):  # noqa: C901
+    def call_widget_generator(self, option, option_key, value, default):
         """Call the right generation method depending on option type."""
         # pylint: disable=too-many-branches
         option_type = option["type"]
@@ -288,7 +348,13 @@ class ConfigBox(VBox):
             self.set_style_property("font-style", "italic", self.wrapper)
 
         if option_type == "choice":
-            self.generate_combobox(option_key, option["choices"], option["label"], value, default)
+            self.generate_combobox(
+                option_key,
+                option["choices"],
+                option["label"],
+                value,
+                default
+            )
 
         elif option_type == "choice_with_entry":
             self.generate_combobox(
@@ -312,23 +378,51 @@ class ConfigBox(VBox):
             self.generate_checkbox(option, value, default)
             self.tooltip_default = "Enabled" if default else "Disabled"
         elif option_type == "range":
-            self.generate_range(option_key, option["min"], option["max"], option["label"], value, default)
+            self.generate_range(
+                option_key,
+                option["min"],
+                option["max"],
+                option["label"],
+                value,
+                default
+            )
         elif option_type == "string":
             if "label" not in option:
                 raise ValueError("Option %s has no label" % option)
-            self.generate_entry(option_key, option["label"], value, default, option_size)
+            self.generate_entry(
+                option_key,
+                option["label"],
+                value,
+                default,
+                option_size
+            )
         elif option_type == "directory_chooser":
             self.generate_directory_chooser(option, value, default)
         elif option_type == "file":
             self.generate_file_chooser(option, value, default)
         elif option_type == "command_line":
-            self.generate_file_chooser(option, value, default, shell_quoting=True)
+            self.generate_file_chooser(
+                option,
+                value,
+                default,
+                shell_quoting=True
+            )
         elif option_type == "multiple":
-            self.generate_multiple_file_chooser(option_key, option["label"], value, default)
+            self.generate_multiple_file_chooser(
+                option_key,
+                option["label"],
+                value,
+                default
+            )
         elif option_type == "label":
             self.generate_label(option["label"])
         elif option_type == "mapping":
-            self.generate_editable_grid(option_key, label=option["label"], value=value, default=default)
+            self.generate_editable_grid(
+                option_key,
+                label=option["label"],
+                value=value,
+                default=default
+            )
         else:
             raise ValueError("Unknown widget type %s" % option_type)
 
@@ -353,7 +447,11 @@ class ConfigBox(VBox):
             switch.set_active(default)
         else:
             switch.set_active(value)
-        switch.connect("notify::active", self.checkbox_toggle, option["option"])
+        switch.connect(
+            "notify::active",
+            self.checkbox_toggle,
+            option["option"]
+        )
         switch.set_valign(Gtk.Align.CENTER)
         self.wrapper.pack_start(switch, False, False, 0)
         self.option_widget = switch
@@ -363,7 +461,14 @@ class ConfigBox(VBox):
         self.option_changed(widget, option_name, widget.get_active())
 
     # Entry
-    def generate_entry(self, option_name, label, value=None, default=None, option_size=None):
+    def generate_entry(
+        self,
+        option_name,
+        label,
+        value=None,
+        default=None,
+        option_size=None
+    ):
         """Generate an entry box."""
         label = Label(label)
         self.wrapper.pack_start(label, False, False, 0)
@@ -379,10 +484,21 @@ class ConfigBox(VBox):
         """Action triggered for entry 'changed' signal."""
         self.option_changed(entry, option_name, entry.get_text())
 
-    def generate_searchable_combobox(self, option_name, choice_func, label, value, default):
+    def generate_searchable_combobox(
+        self,
+        option_name,
+        choice_func,
+        label,
+        value,
+        default
+    ):
         """Generate a searchable combo box"""
         combobox = SearchableCombobox(choice_func, value or default)
-        combobox.connect("changed", self.on_searchable_entry_changed, option_name)
+        combobox.connect(
+            "changed",
+            self.on_searchable_entry_changed,
+            option_name
+        )
         self.wrapper.pack_start(Label(label), False, False, 0)
         self.wrapper.pack_start(combobox, True, True, 0)
         self.option_widget = combobox
@@ -391,7 +507,11 @@ class ConfigBox(VBox):
         self.option_changed(combobox, key, value)
 
     def _populate_combobox_choices(self, liststore, choices, value, default):
-        expanded, tooltip_default = self._expand_combobox_choices(choices, value, default)
+        expanded, tooltip_default = self._expand_combobox_choices(
+            choices,
+            value,
+            default
+        )
         for choice in expanded:
             liststore.append(choice)
 
@@ -417,7 +537,15 @@ class ConfigBox(VBox):
         return expanded, tooltip_default
 
     # ComboBox
-    def generate_combobox(self, option_name, choices, label, value=None, default=None, has_entry=False):
+    def generate_combobox(
+        self,
+        option_name,
+        choices,
+        label,
+        value=None,
+        default=None,
+        has_entry=False
+    ):
         """Generate a combobox (drop-down menu)."""
         liststore = Gtk.ListStore(str, str)
         self._populate_combobox_choices(liststore, choices, value, default)
@@ -434,7 +562,11 @@ class ConfigBox(VBox):
 
         combobox.set_id_column(1)
 
-        expanded, _tooltip_default = self._expand_combobox_choices(choices, value, default)
+        expanded, _tooltip_default = self._expand_combobox_choices(
+            choices,
+            value,
+            default
+        )
         if value in [v for _k, v in expanded]:
             combobox.set_active_id(value)
         elif has_entry:
@@ -474,16 +606,35 @@ class ConfigBox(VBox):
         self.option_changed(combobox, option, option_value)
 
     # Range
-    def generate_range(self, option_name, min_val, max_val, label, value=None, default=None):
+    def generate_range(
+        self,
+        option_name,
+        min_val,
+        max_val,
+        label,
+        value=None,
+        default=None
+    ):
         """Generate a ranged spin button."""
-        adjustment = Gtk.Adjustment(float(min_val), float(min_val), float(max_val), 1, 0, 0)
+        adjustment = Gtk.Adjustment(
+            float(min_val),
+            float(min_val),
+            float(max_val),
+            1,
+            0,
+            0
+        )
         spin_button = Gtk.SpinButton()
         spin_button.set_adjustment(adjustment)
         if value:
             spin_button.set_value(value)
         elif default:
             spin_button.set_value(default)
-        spin_button.connect("changed", self.on_spin_button_changed, option_name)
+        spin_button.connect(
+            "changed",
+            self.on_spin_button_changed,
+            option_name
+        )
         label = Label(label)
         self.wrapper.pack_start(label, False, False, 0)
         self.wrapper.pack_start(spin_button, True, True, 0)
@@ -495,12 +646,23 @@ class ConfigBox(VBox):
         self.option_changed(spin_button, option, value)
 
     # File chooser
-    def generate_file_chooser(self, option, path=None, default_path=None, shell_quoting=False):
+    def generate_file_chooser(
+        self,
+        option,
+        path=None,
+        default_path=None,
+        shell_quoting=False
+    ):
         """Generate a file chooser button to select a file."""
         option_name = option["option"]
         label = Label(option["label"])
-        chooser_default_path = option.get("default_path") or (self.runner.default_path if self.runner else "")
-        warn_if_non_writable_parent = bool(option.get("warn_if_non_writable_parent"))
+        chooser_default_path = (
+            option.get("default_path")
+            or (self.runner.default_path if self.runner else "")
+        )
+        warn_if_non_writable_parent = bool(
+            option.get("warn_if_non_writable_parent")
+        )
 
         if not path:
             path = default_path
@@ -515,7 +677,9 @@ class ConfigBox(VBox):
         )
 
         if "default_path" in option:
-            chooser_default_path = self.lutris_config.system_config.get(option["default_path"])
+            chooser_default_path = self.lutris_config.system_config.get(
+                option["default_path"]
+            )
             if chooser_default_path and os.path.exists(chooser_default_path):
                 file_chooser.entry.set_text(chooser_default_path)
 
@@ -540,7 +704,9 @@ class ConfigBox(VBox):
         """Generate a file chooser button to select a directory."""
         label = Label(option["label"])
         option_name = option["option"]
-        warn_if_non_writable_parent = bool(option.get("warn_if_non_writable_parent"))
+        warn_if_non_writable_parent = bool(
+            option.get("warn_if_non_writable_parent")
+        )
 
         if not path:
             path = default_path
@@ -555,7 +721,11 @@ class ConfigBox(VBox):
             text=path,
             default_path=chooser_default_path,
         )
-        directory_chooser.connect("changed", self._on_chooser_file_set, option_name)
+        directory_chooser.connect(
+            "changed",
+            self._on_chooser_file_set,
+            option_name
+        )
         directory_chooser.set_valign(Gtk.Align.CENTER)
         self.wrapper.pack_start(label, False, False, 0)
         self.wrapper.pack_start(directory_chooser, True, True, 0)
@@ -569,13 +739,23 @@ class ConfigBox(VBox):
         self.option_changed(entry, option, text)
 
     # Editable grid
-    def generate_editable_grid(self, option_name, label, value=None, default=None):
+    def generate_editable_grid(
+        self,
+        option_name,
+        label,
+        value=None,
+        default=None
+    ):
         """Adds an editable grid widget"""
         value = value or default or {}
         try:
             value = list(value.items())
         except AttributeError:
-            logger.error("Invalid value of type %s passed to grid widget: %s", type(value), value)
+            logger.error(
+                "Invalid value of type %s passed to grid widget: %s",
+                type(value),
+                value
+            )
             value = {}
         label = Label(label)
 
@@ -591,13 +771,23 @@ class ConfigBox(VBox):
         self.option_changed(grid, option, values)
 
     # Multiple file selector
-    def generate_multiple_file_chooser(self, option_name, label, value=None, default=None):
+    def generate_multiple_file_chooser(
+        self,
+        option_name,
+        label, value=None,
+        default=None
+    ):
         """Generate a multiple file selector."""
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         label = Label(label + ":")
         label.set_halign(Gtk.Align.START)
         button = Gtk.Button(_("Add Files"))
-        button.connect("clicked", self.on_add_files_clicked, option_name, value)
+        button.connect(
+            "clicked",
+            self.on_add_files_clicked,
+            option_name,
+            value
+        )
         button.set_margin_left(10)
         vbox.pack_start(label, False, False, 5)
         vbox.pack_end(button, False, False, 0)
@@ -619,12 +809,19 @@ class ConfigBox(VBox):
         files_treeview = Gtk.TreeView(self.files_list_store)
         files_column = Gtk.TreeViewColumn(_("Files"), cell_renderer, text=0)
         files_treeview.append_column(files_column)
-        files_treeview.connect("key-press-event", self.on_files_treeview_keypress, option_name)
+        files_treeview.connect(
+            "key-press-event",
+            self.on_files_treeview_keypress,
+            option_name
+        )
         treeview_scroll = Gtk.ScrolledWindow()
         treeview_scroll.set_min_content_height(130)
         treeview_scroll.set_margin_left(10)
         treeview_scroll.set_shadow_type(Gtk.ShadowType.ETCHED_IN)
-        treeview_scroll.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        treeview_scroll.set_policy(
+            Gtk.PolicyType.AUTOMATIC,
+            Gtk.PolicyType.AUTOMATIC
+        )
         treeview_scroll.add(files_treeview)
 
         vbox.pack_start(treeview_scroll, True, True, 0)
@@ -644,7 +841,10 @@ class ConfigBox(VBox):
 
         first_file_dir = os.path.dirname(value[0]) if value else None
         dialog.set_current_folder(
-            first_file_dir or self.game.directory or self.config.get("game_path") or os.path.expanduser("~")
+            first_file_dir
+            or self.game.directory
+            or self.config.get("game_path")
+            or os.path.expanduser("~")
         )
         response = dialog.run()
         if response == Gtk.ResponseType.ACCEPT:
@@ -674,7 +874,7 @@ class ConfigBox(VBox):
                 self.raw_config[option].pop(row_index)
 
     @staticmethod
-    def on_query_tooltip(_widget, x, y, keybmode, tooltip, text):  # pylint: disable=unused-argument
+    def on_query_tooltip(_widget, x, y, keybmode, tooltip, text):  # pylint: disable=unused-argument  # noqa: E501
         """Prepare a custom tooltip with a fixed width"""
         label = Label(text)
         label.set_use_markup(True)
@@ -685,7 +885,7 @@ class ConfigBox(VBox):
         tooltip.set_custom(event_box)
         return True
 
-    def option_changed(self, widget, option_name, value):
+    def option_changed(self, _widget, option_name, value):
         """Common actions when value changed on a widget"""
         self.raw_config[option_name] = value
         self.config[option_name] = value
@@ -732,14 +932,20 @@ class ConfigBox(VBox):
     def set_style_property(property_, value, wrapper):
         """Add custom style."""
         style_provider = Gtk.CssProvider()
-        style_provider.load_from_data("GtkHBox {{{}: {};}}".format(property_, value).encode())
+        style_provider.load_from_data(
+            "GtkHBox {{{}: {};}}".format(property_, value).encode()
+        )
         style_context = wrapper.get_style_context()
-        style_context.add_provider(style_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+        style_context.add_provider(
+            style_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
 
     class SectionFrame(Gtk.Frame):
-        """A frame that is styled to have particular margins, and can have its frame hidden.
-        This leaves the content but removes the margins and borders and all that, so it looks
-        like the frame was never there."""
+        """A frame that is styled to have particular margins, and can have its
+        frame hidden. This leaves the content but removes the margins and
+        borders and all that, so it looks like the frame was never there.
+        """
 
         def __init__(self, section):
             super().__init__(label=section)
@@ -778,7 +984,8 @@ class RunnerBox(ConfigBox):
 
         if lutris_config.level == "game":
             self.generate_top_info_box(
-                _("If modified, these options supersede the same options from " "the base runner configuration.")
+                _("If modified, these options supersede the same options from "
+                    "the base runner configuration.")
             )
 
     def generate_widgets(self):
@@ -804,21 +1011,30 @@ class SystemConfigBox(ConfigBox):
         if lutris_config.game_config_id and runner_slug:
             self.generate_top_info_box(
                 _(
-                    "If modified, these options supersede the same options from "
-                    "the base runner configuration, which themselves supersede "
-                    "the global preferences."
+                    "If modified, these options supersede the same options "
+                    "from the base runner configuration, which themselves "
+                    "supersede the global preferences."
                 )
             )
         elif runner_slug:
             self.generate_top_info_box(
-                _("If modified, these options supersede the same options from " "the global preferences.")
+                _("If modified, these options supersede the same options from "
+                    "the global preferences.")
             )
 
 
 class UnderslungMessageBox(Gtk.Box):
-    """A box to display a message with an icon inside the configuration dialog."""
+    """A box to display a message with an icon inside the configuration
+    dialog.
+    """
 
-    def __init__(self, icon_name, margin_left=18, margin_right=18, margin_bottom=6):
+    def __init__(
+        self,
+        icon_name,
+        margin_left=18,
+        margin_right=18,
+        margin_bottom=6
+    ):
         super().__init__(
             spacing=6,
             visible=False,
@@ -836,8 +1052,10 @@ class UnderslungMessageBox(Gtk.Box):
         self.pack_start(self.label, False, False, 0)
 
     def show_markup(self, markup):
-        """Displays the markup given, and shows this box. If markup is empty or None,
-        this hides the box instead. Returns the new visibility."""
+        """Displays the markup given, and shows this box.
+        If markup is empty or None, this hides the box instead.
+        Returns the new visibility.
+        """
         visible = bool(markup)
 
         if markup:
@@ -866,7 +1084,10 @@ class ConfigMessageBox(UnderslungMessageBox):
             else:
                 text = self.warning
         except Exception as err:
-            logger.exception("Unable to generate configuration warning: %s", err)
+            logger.exception(
+                "Unable to generate configuration warning: %s",
+                err
+            )
             text = gtk_safe(str(err))
 
         return self.show_markup(text)

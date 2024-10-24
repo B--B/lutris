@@ -3,7 +3,11 @@ from gettext import gettext as _
 
 from gi.repository import Gtk
 
-from lutris.cache import get_cache_path, has_custom_cache_path, save_custom_cache_path
+from lutris.cache import (
+    get_cache_path,
+    has_custom_cache_path,
+    save_custom_cache_path
+)
 from lutris.config import LutrisConfig
 from lutris.gui.config.base_config_box import BaseConfigBox
 from lutris.gui.widgets.common import FileChooserEntry, Label
@@ -14,7 +18,12 @@ class StorageBox(BaseConfigBox):
     def populate(self):
         self.add(self.get_section_label(_("Paths")))
         path_widgets = self.get_path_widgets()
-        self.pack_start(self._get_framed_options_list_box(path_widgets), False, False, 0)
+        self.pack_start(
+            self._get_framed_options_list_box(path_widgets),
+            False,
+            False,
+            0
+        )
 
     def get_path_widgets(self):
         widgets = []
@@ -33,7 +42,8 @@ class StorageBox(BaseConfigBox):
                 "default": "",
                 "value": get_cache_path() if has_custom_cache_path() else "",
                 "help": _(
-                    "If provided, files downloaded during game installs will be kept there\n"
+                    "If provided, files downloaded during game installs will "
+                    "be kept there\n"
                     "\nOtherwise, all downloaded files are discarded."
                 ),
             },
@@ -45,7 +55,11 @@ class StorageBox(BaseConfigBox):
     def get_directory_chooser(self, path_setting):
         label = Label()
         label.set_markup("<b>%s</b>" % path_setting["name"])
-        wrapper = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=4, visible=True)
+        wrapper = Gtk.Box(
+            orientation=Gtk.Orientation.HORIZONTAL,
+            spacing=4,
+            visible=True
+        )
         wrapper.set_margin_top(16)
 
         default_path = path_setting["default"]
@@ -56,11 +70,19 @@ class StorageBox(BaseConfigBox):
             text=path_setting["value"],
             default_path=default_path,
         )
-        directory_chooser.connect("changed", self.on_file_chooser_changed, path_setting)
+        directory_chooser.connect(
+            "changed",
+            self.on_file_chooser_changed,
+            path_setting
+        )
         wrapper.pack_start(label, False, False, 0)
         wrapper.pack_start(directory_chooser, True, True, 0)
         if path_setting["help"]:
-            help_wrapper = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=4, visible=True)
+            help_wrapper = Gtk.Box(
+                orientation=Gtk.Orientation.VERTICAL,
+                spacing=4,
+                visible=True
+            )
             help_wrapper.add(wrapper)
             help_label = Label()
             help_label.set_markup("<i>%s</i>" % path_setting["help"])

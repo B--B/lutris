@@ -15,13 +15,19 @@ class ServicesBox(BaseConfigBox):
 
     def __init__(self):
         super().__init__()
-        self.add(self.get_section_label(_("Enable integrations with game sources")))
+        self.add(self.get_section_label(
+            _("Enable integrations with game sources")
+        ))
         self.add(
-            self.get_description_label(
-                _("Access your game libraries from various sources. " "Changes require a restart to take effect.")
-            )
+            self.get_description_label(_(
+                "Access your game libraries from various sources. "
+                "Changes require a restart to take effect."
+            ))
         )
-        self.frame = Gtk.Frame(visible=True, shadow_type=Gtk.ShadowType.ETCHED_IN)
+        self.frame = Gtk.Frame(
+            visible=True,
+            shadow_type=Gtk.ShadowType.ETCHED_IN
+        )
         self.listbox = Gtk.ListBox(visible=True)
         self.frame.add(self.listbox)
         self.pack_start(self.frame, False, False, 0)
@@ -46,7 +52,10 @@ class ServicesBox(BaseConfigBox):
         service = SERVICES[service_key]
 
         icon = ScaledImage.get_runtime_icon_image(
-            service.icon, service.id, scale_factor=self.get_scale_factor(), visible=True
+            service.icon,
+            service.id,
+            scale_factor=self.get_scale_factor(),
+            visible=True
         )
         box.pack_start(icon, False, False, 0)
         service_label_box = Gtk.VBox(visible=True)
@@ -62,7 +71,10 @@ class ServicesBox(BaseConfigBox):
         box.pack_start(service_label_box, True, True, 0)
 
         checkbox = Gtk.Switch(visible=True)
-        if settings.read_setting(service_key, section="services").lower() == "true":
+        if settings.read_setting(
+            service_key,
+            section="services"
+        ).lower() == "true":
             checkbox.set_active(True)
         checkbox.connect("state-set", self._on_service_change, service_key)
         alignment = Gtk.Alignment.new(0.5, 0.5, 0, 0)

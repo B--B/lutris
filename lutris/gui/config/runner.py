@@ -15,7 +15,11 @@ class RunnerConfigDialog(GameDialogCommon):
     }
 
     def __init__(self, runner, parent=None):
-        super().__init__(_("Configure %s") % runner.human_name, config_level="runner", parent=parent)
+        super().__init__(
+            _("Configure %s") % runner.human_name,
+            config_level="runner",
+            parent=parent
+        )
         self.runner_name = runner.__class__.__name__
         self.saved = False
         self.lutris_config = LutrisConfig(runner_slug=self.runner_name)

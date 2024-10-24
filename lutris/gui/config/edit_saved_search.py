@@ -36,11 +36,17 @@ class SearchFiltersBox(Gtk.Box):
         self.set_margin_end(20)
         self.set_spacing(10)
 
-        self.name_entry = self._add_entry_box(_("Name"), self.saved_search.name)
+        self.name_entry = self._add_entry_box(
+            _("Name"),
+            self.saved_search.name
+        )
         self.search_entry = self._add_entry_box(_("Search"), self.search)
         self.search_entry.connect("changed", self.on_search_entry_changed)
 
-        self.predicate_widget_functions: Dict[str, Callable[[SearchPredicate], None]] = {}
+        self.predicate_widget_functions: Dict[
+            str,
+            Callable[[SearchPredicate], None]
+        ] = {}
         self.updating_predicate_widgets = False
 
         predicates_box = Gtk.Box(Gtk.Orientation.HORIZONTAL)
@@ -49,14 +55,25 @@ class SearchFiltersBox(Gtk.Box):
         self._add_flag_widgets()
 
         categories_scrolled_window = Gtk.ScrolledWindow(visible=True)
-        categories_scrolled_window.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.AUTOMATIC)
+        categories_scrolled_window.set_policy(
+            Gtk.PolicyType.AUTOMATIC,
+            Gtk.PolicyType.AUTOMATIC
+        )
         categories_frame = Gtk.Frame(visible=True)
         categories_frame.get_style_context().add_class("info-frame")
         categories_frame.add(categories_scrolled_window)
         self.categories_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         categories_scrolled_window.add(self.categories_box)
-        categories_frame_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
-        categories_frame_box.pack_start(Gtk.Label(_("Categories"), halign=Gtk.Align.START), False, False, 0)
+        categories_frame_box = Gtk.Box(
+            orientation=Gtk.Orientation.VERTICAL,
+            spacing=6
+        )
+        categories_frame_box.pack_start(
+            Gtk.Label(_("Categories"), halign=Gtk.Align.START),
+            False,
+            False,
+            0
+        )
         categories_frame_box.pack_start(categories_frame, True, True, 0)
 
         self._add_category_widgets()
@@ -136,7 +153,11 @@ class SearchFiltersBox(Gtk.Box):
             else:
                 combobox.set_active_id("")
 
-        label = Gtk.Label(caption, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
+        label = Gtk.Label(
+            caption,
+            halign=Gtk.Align.START,
+            valign=Gtk.Align.CENTER
+        )
         label.set_alignment(0, 0.5)
         label.set_size_request(120, -1)
         self.flags_grid.attach(label, 0, row, 1, 1)
@@ -153,27 +174,52 @@ class SearchFiltersBox(Gtk.Box):
         combobox.connect("changed", on_combobox_change)
 
     def _add_service_widget(self, row):
-        options = [(s[1]().name, s[0]) for s in services.get_enabled_services().items()]
+        options = [
+            (s[1]().name, s[0])
+            for s in services.get_enabled_services().items()
+        ]
 
         self._add_match_widget(
-            row, "Source", "source", options, predicate_factory=lambda s, v: s.get_service_predicate(v)
+            row,
+            "Source",
+            "source",
+            options,
+            predicate_factory=lambda s,
+            v: s.get_service_predicate(v)
         )
 
     def _add_runner_widget(self, row):
         options = [(r.human_name, r.name) for r in runners.get_installed()]
 
         self._add_match_widget(
-            row, "Runner", "runner", options, predicate_factory=lambda s, v: s.get_runner_predicate(v)
+            row,
+            "Runner",
+            "runner",
+            options,
+            predicate_factory=lambda s,
+            v: s.get_runner_predicate(v)
         )
 
     def _add_platform_widget(self, row):
         options = [(p, p) for p in games_db.get_used_platforms()]
 
         self._add_match_widget(
-            row, "Platform", "platform", options, predicate_factory=lambda s, v: s.get_platform_predicate(v)
+            row,
+            "Platform",
+            "platform",
+            options,
+            predicate_factory=lambda s,
+            v: s.get_platform_predicate(v)
         )
 
-    def _add_match_widget(self, row: int, caption: str, tag: str, options: List[Tuple[str, str]], predicate_factory):
+    def _add_match_widget(
+        self,
+        row: int,
+        caption: str,
+        tag: str,
+        options: List[Tuple[str, str]],
+        predicate_factory
+    ):
         def on_combobox_change(_widget):
             if not self.updating_predicate_widgets:
                 game_search = GameSearch(self.search)
@@ -192,7 +238,11 @@ class SearchFiltersBox(Gtk.Box):
             else:
                 combobox.set_active_id("")
 
-        label = Gtk.Label(caption, halign=Gtk.Align.START, valign=Gtk.Align.CENTER)
+        label = Gtk.Label(
+            caption,
+            halign=Gtk.Align.START,
+            valign=Gtk.Align.CENTER
+        )
         self.flags_grid.attach(label, 0, row, 1, 1)
 
         options = [(_("-"), "")] + options
@@ -213,10 +263,17 @@ class SearchFiltersBox(Gtk.Box):
         def on_checkbox_toggled(_widget):
             if not self.updating_predicate_widgets:
                 game_search = GameSearch(self.search)
-                predicate = game_search.get_predicate().without_match("category", category_name)
+                predicate = game_search.get_predicate().without_match(
+                    "category",
+                    category_name
+                )
                 if checkbox.get_active():
-                    category_predicate = game_search.get_category_predicate(category_name)
-                    predicate = AndPredicate([predicate, category_predicate]).simplify()
+                    category_predicate = (
+                        game_search.get_category_predicate(category_name)
+                    )
+                    predicate = AndPredicate(
+                        [predicate, category_predicate]
+                    ).simplify()
                 self.search = str(predicate)
                 self.search_entry.set_text(self.search)
 
@@ -264,20 +321,32 @@ class EditSavedSearchDialog(SavableModelessDialog):
         self.vbox.set_spacing(10)
         self.vbox.pack_start(self.filter_box, True, True, 0)
 
-        delete_button = self.add_styled_button(Gtk.STOCK_DELETE, Gtk.ResponseType.NONE, css_class="destructive-action")
+        delete_button = self.add_styled_button(
+            Gtk.STOCK_DELETE,
+            Gtk.ResponseType.NONE,
+            css_class="destructive-action"
+        )
         delete_button.connect("clicked", self.on_delete_clicked)
-        delete_button.show() if self.saved_search.saved_search_id else delete_button.hide()
+        if self.saved_search.saved_search_id:
+            delete_button.show()
+        else:
+            delete_button.hide()
 
     def on_save(self, _button: Gtk.Button) -> None:
         """Save game info and destroy widget."""
         self.saved_search.name = saved_searches.strip_saved_search_name(
-            self.filter_box.name_entry.get_text() or self.original_search.name
+            self.filter_box.name_entry.get_text()
+            or self.original_search.name
         )
-        self.saved_search.search = str(GameSearch(self.filter_box.search_entry.get_text()))
+        self.saved_search.search = str(
+            GameSearch(self.filter_box.search_entry.get_text())
+        )
 
         if self.original_search.name != self.saved_search.name:
             if saved_searches.get_saved_search_by_name(self.saved_search.name):
-                raise RuntimeError(_("'%s' is already a saved search.") % self.saved_search.name)
+                raise RuntimeError(_(
+                    "'%s' is already a saved search."
+                ) % self.saved_search.name)
 
         if not self.saved_search.saved_search_id:
             # Creating new search!
@@ -291,9 +360,12 @@ class EditSavedSearchDialog(SavableModelessDialog):
     def on_delete_clicked(self, _button):
         dlg = QuestionDialog(
             {
-                "title": _("Do you want to delete the saved search '%s'?") % self.original_search.name,
+                "title": _(
+                    "Do you want to delete the saved search '%s'?"
+                ) % self.original_search.name,
                 "question": _(
-                    "This will permanently destroy the saved search, but the games themselves will not be deleted."
+                    "This will permanently destroy the saved search, but the "
+                    "games themselves will not be deleted."
                 ),
                 "parent": self,
             }
