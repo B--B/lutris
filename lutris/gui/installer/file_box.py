@@ -62,7 +62,10 @@ class InstallerFileBox(Gtk.VBox):
             box.pack_start(download_progress, False, False, 0)
             return box
         if self.provider == "pga":
-            url_label = InstallerLabel("In cache: %s" % self.installer_file.get_label(), wrap=False)
+            url_label = InstallerLabel(
+                f"In cache: {self.installer_file.get_label()}",
+                wrap=False
+            )
             box.pack_start(url_label, False, False, 6)
             return box
         if self.provider == "user":
@@ -87,7 +90,7 @@ class InstallerFileBox(Gtk.VBox):
             info_box.add(self.state_label)
             steam_box.add(info_box)
             return steam_box
-        raise ValueError("Invalid provider %s" % self.provider)
+        raise ValueError(f"Invalid provider {self.provider}")
 
     def get_combobox_model(self):
         """ "Return the combobox's model"""
