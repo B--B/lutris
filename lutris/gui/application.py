@@ -587,11 +587,12 @@ class Application(Gtk.Application):
                 if len(games) > 1:
                     self._print(
                         command_line,
-                        "Multiple games matching %s: %s" % (slug, ",".join(game["slug"] for game in games)),
+                        f"Multiple games matching "
+                        f"{slug}: {','.join(game["slug"] for game in games)}",
                     )
                     return
                 if not games:
-                    self._print(command_line, "No matching game for %s" % slug)
+                    self._print(command_line, f"No matching game for {slug}")
                     return
                 return Game(games[0]["id"])
 

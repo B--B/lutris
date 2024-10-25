@@ -752,12 +752,18 @@ class LutrisWindow(Gtk.ApplicationWindow, DialogLaunchUIDelegate, DialogInstallU
     def show_splash(self):
         theme = "dark" if self.application.style_manager.is_dark else "light"
         side_splash = Gtk.Image(visible=True)
-        side_splash.set_from_file(os.path.join(datapath.get(), "media/side-%s.svg" % theme))
+        side_splash.set_from_file(os.path.join(
+            datapath.get(),
+            f"media/side-{theme}.svg"
+        ))
         side_splash.set_alignment(0, 0)
 
         center_splash = Gtk.Image(visible=True)
         center_splash.set_alignment(0.5, 0.5)
-        center_splash.set_from_file(os.path.join(datapath.get(), "media/splash-%s.svg" % theme))
+        center_splash.set_from_file(os.path.join(
+            datapath.get(),
+            f"media/splash-{theme}.svg"
+        ))
 
         splash_box = Gtk.HBox(visible=True, margin_top=24)
         splash_box.pack_start(side_splash, False, False, 12)
@@ -837,18 +843,18 @@ class LutrisWindow(Gtk.ApplicationWindow, DialogLaunchUIDelegate, DialogInstallU
         default_icon_types = {
             "icon_type_grid": "coverart_med",
         }
-        setting_key = "icon_type_%sview" % self.current_view_type
+        setting_key = f"icon_type_{self.current_view_type}view"
         if self.service and self.service.id != "lutris":
-            setting_key += "_%s" % self.service.id
+            setting_key += f"_{self.service.id}"
         self.icon_type = settings.read_setting(setting_key, default=default_icon_types.get(setting_key, ""))
         return self.icon_type
 
     def save_icon_type(self, icon_type):
         """Save icon type to settings"""
         self.icon_type = icon_type
-        setting_key = "icon_type_%sview" % self.current_view_type
+        setting_key = f"icon_type_{self.current_view_type}view"
         if self.service and self.service.id != "lutris":
-            setting_key += "_%s" % self.service.id
+            setting_key += f"_{self.service.id}"
         settings.write_setting(setting_key, self.icon_type)
         self.redraw_view()
 
@@ -909,7 +915,10 @@ class LutrisWindow(Gtk.ApplicationWindow, DialogLaunchUIDelegate, DialogInstallU
             self.current_view.show_badges = show_badges and not bool(self.filters.get("platform"))
 
     def set_viewtype_icon(self, view_type):
-        self.viewtype_icon.set_from_icon_name("view-%s-symbolic" % view_type, Gtk.IconSize.BUTTON)
+        self.viewtype_icon.set_from_icon_name(
+            f"view-{view_type}-symbolic",
+            Gtk.IconSize.BUTTON
+        )
 
     def set_show_installed_state(self, filter_installed):
         """Shows or hide uninstalled games"""

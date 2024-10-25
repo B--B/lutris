@@ -489,7 +489,7 @@ class InstallerWindow(ModelessDialog, DialogInstallUIDelegate, ScriptInterpreter
         if extra.get("type"):
             _infos.append(extra["type"])
         if _infos:
-            label += " (%s)" % ", ".join(_infos)
+            label += f" ({', '.join(_infos)})"
         return label
 
     def on_extras_loaded(self, all_extras, error):
