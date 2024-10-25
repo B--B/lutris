@@ -150,7 +150,12 @@ class UninstallDialog(Gtk.Dialog):
                 )
             )
         else:
-            messages.append(_("After you remove these games, they will no longer " "appear in the 'Games' view."))
+            messages.append(
+                _(
+                    "After you remove these games, they will no longer "
+                    "appear in the 'Games' view."
+                )
+            )
 
         if self.any_shared:
             messages.append(
@@ -258,7 +263,10 @@ class UninstallDialog(Gtk.Dialog):
 
         if dirs_to_delete:
             if len(dirs_to_delete) == 1:
-                question = _("Please confirm.\nEverything under <b>%s</b>\n" "will be moved to the trash.") % gtk_safe(
+                question = _(
+                    "Please confirm.\nEverything under <b>%s</b>\n"
+                    "will be moved to the trash."
+                ) % gtk_safe(
                     dirs_to_delete[0]
                 )
             else:
