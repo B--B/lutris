@@ -867,7 +867,7 @@ class GameDialogCommon(SavableModelessDialog, DialogInstallUIDelegate):
             logger.warning(_(
                 "Current configuration is not valid, ignoring save request"
             ))
-            return
+            return False
         name = self.name_entry.get_text()
         sortname = self.sortname_entry.get_text()
 

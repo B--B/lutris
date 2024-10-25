@@ -247,7 +247,7 @@ class UpdatesBox(BaseConfigBox):
             logger.error(
                 "No application or window found, how does this happen?"
             )
-            return
+            return None
         return application.window
 
     def on_runners_update_clicked(self, _widget):
