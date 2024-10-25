@@ -42,7 +42,7 @@ class DownloadProgressBox(Gtk.Box):
 
         if not title:
             parsed_url = urlparse(url)
-            title = "%s%s" % (parsed_url.netloc, parsed_url.path)
+            title = f"{parsed_url.netloc}{parsed_url.path}"
 
         self.main_label = Gtk.Label(title)
         self.main_label.set_alignment(0, 0)

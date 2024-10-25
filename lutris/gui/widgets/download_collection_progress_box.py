@@ -128,7 +128,12 @@ class DownloadCollectionProgressBox(Gtk.Box):
         self.update_download_file_label(file.filename)
         if not self.downloader:
             try:
-                self.downloader = Downloader(file.url, file.tmp_file, referer=file.referer, overwrite=True)
+                self.downloader = Downloader(
+                    file.url,
+                    file.tmp_file,
+                    referer=file.referer,
+                    overwrite=True
+                )
             except RuntimeError as ex:
                 display_error(ex, parent=self.get_toplevel())
                 self.emit("cancel")
@@ -236,8 +241,8 @@ class DownloadCollectionProgressBox(Gtk.Box):
         minutes, seconds = divmod(average_time_left, 60)
         hours, minutes = divmod(minutes, 60)
         self.time_left_check_time = get_time()
-        self.time_left = "%d:%02d:%02d" % (hours, minutes, seconds)
+        self.time_left = f"{int(hours)}:{int(minutes):02}:{int(seconds):02}"
 
     def _set_text(self, text):
-        markup = "<span size='10000'>{}</span>".format(gtk_safe(text))
+        markup = f"<span size='10000'>{gtk_safe(text)}</span>"
         self.progress_label.set_markup(markup)

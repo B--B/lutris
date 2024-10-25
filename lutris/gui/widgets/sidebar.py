@@ -283,13 +283,17 @@ class CategorySidebarRow(SidebarRow):
 
     def __lt__(self, other):
         if not isinstance(other, CategorySidebarRow):
-            raise ValueError("Cannot compare %s to %s" % (self.__class__.__name__, other.__class__.__name__))
+            raise ValueError(
+                f"Cannot compare {self.__class__.__name__} "
+                "to {other.__class__.__name__}")
 
         return self._sort_name < other._sort_name
 
     def __gt__(self, other):
         if not isinstance(other, CategorySidebarRow):
-            raise ValueError("Cannot compare %s to %s" % (self.__class__.__name__, other.__class__.__name__))
+            raise ValueError(
+                f"Cannot compare {self.__class__.__name__} "
+                "to {other.__class__.__name__}")
 
         return self._sort_name > other._sort_name
 
@@ -324,13 +328,19 @@ class SavedSearchSidebarRow(SidebarRow):
 
     def __lt__(self, other):
         if not isinstance(other, SavedSearchSidebarRow):
-            raise ValueError("Cannot compare %s to %s" % (self.__class__.__name__, other.__class__.__name__))
+            raise ValueError(
+                f"Cannot compare {self.__class__.__name__} "
+                "to {other.__class__.__name__}"
+            )
 
         return self._sort_name < other._sort_name
 
     def __gt__(self, other):
         if not isinstance(other, SavedSearchSidebarRow):
-            raise ValueError("Cannot compare %s to %s" % (self.__class__.__name__, other.__class__.__name__))
+            raise ValueError(
+                f"Cannot compare {self.__class__.__name__} "
+                "to {other.__class__.__name__}"
+            )
 
         return self._sort_name > other._sort_name
 

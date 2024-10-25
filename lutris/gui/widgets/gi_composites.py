@@ -59,9 +59,9 @@ def _connect_func(builder, obj, signal_name, handler_name, connect_object, flags
 
     if template_inst is None:  # This should never happen
         errmsg = (
-            "Internal error: cannot find template instance! obj: %s; "
-            "signal: %s; handler: %s; connect_obj: %s; class: %s"
-            % (obj, signal_name, handler_name, connect_object, cls)
+            f"Internal error: cannot find template instance! obj: {obj}; "
+            "signal: {signal_name}; handler: {handler_name}; "
+            "connect_obj: {connect_object}; class: {cls}"
         )
         warnings.warn(errmsg, GtkTemplateWarning)
         return
@@ -139,13 +139,17 @@ def _init_template(self, cls, base_init_template):
             #      one is broken either -- but the stderr should show
             #      something useful with a Gtk-CRITICAL message)
             raise AttributeError(
-                "A missing child widget was set using "
-                "GtkTemplate.Child and the entire "
-                "template is now broken (widgets: %s)" % ", ".join(self.__gtemplate_widgets__)
+                f"A missing child widget was set using "
+                f"GtkTemplate.Child and the entire "
+                f"template is now broken (widgets: "
+                f"{', '.join(self.__gtemplate_widgets__)})"
             )
 
     for name in self.__gtemplate_methods__.difference(connected_signals):
-        errmsg = ("Signal '%s' was declared with @GtkTemplate.Callback " + "but was not present in template") % name
+        errmsg = (
+            f"Signal '{name}' was declared with @GtkTemplate.Callback "
+            + "but was not present in template"
+        )
         warnings.warn(errmsg, GtkTemplateWarning)
 
 
