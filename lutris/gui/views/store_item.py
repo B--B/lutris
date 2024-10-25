@@ -26,7 +26,7 @@ class StoreItem:
         return self.name
 
     def __repr__(self):
-        return "<Store id=%s slug=%s>" % (self.id, self.slug)
+        return f"<Store id={self.id} slug={self.slug}>"
 
     @property
     def _installed_game_data(self):
