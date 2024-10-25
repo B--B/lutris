@@ -136,6 +136,7 @@ class DialogInstallUIDelegate(InstallUIDelegate):
         if dlg.result == dlg.YES:
             dlg = dialogs.FileDialog(message)
             return dlg.filename
+        return None
 
     def download_install_file(self, url, destination):
         dialog = DownloadDialog(url, destination, parent=self)
