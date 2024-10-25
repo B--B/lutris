@@ -111,7 +111,11 @@ class ImportGameDialog(ModelessDialog):
         def show_progress(filepath, message):
             # It's not safe to directly update labels from a worker thread, so
             # this will do it on the GUI main thread instead.
-            GLib.idle_add(lambda: self.progress_labels[filepath].set_markup("<i>%s</i>" % gtk_safe(message)))
+            GLib.idle_add(
+                lambda: self.progress_labels[filepath].set_markup(
+                    f"<i>{gtk_safe(message)}</i>"
+                )
+            )
 
         def get_existing_game(filepath):
             for game_id, game_path in game_path_cache.items():
@@ -198,7 +202,9 @@ class ImportGameDialog(ModelessDialog):
         except Exception as ex:
             logger.exception(_("Failed to import a ROM: %s"), ex)
             error_label = self.error_labels[filename]
-            error_label.set_markup('<span style="italic" foreground="red">%s</span>' % gtk_safe(str(ex)))
+            error_label.set_markup(
+                f'<span style="italic" foreground="red">{gtk_safe(str(ex))}</span>'
+            )
             error_label.show()
 
         return False
@@ -220,7 +226,7 @@ class ImportGameDialog(ModelessDialog):
         label.set_markup("<i>%s</i>" % _("Game already installed in Lutris"))
         label.show()
         label = self.description_labels[filename]
-        label.set_markup("<b>%s</b>" % game.name)
+        label.set_markup(f"<b>{game.name}</b>")
         category = game.platform
         label = self.category_labels[filename]
         label.set_text(category)
@@ -231,7 +237,7 @@ class ImportGameDialog(ModelessDialog):
         label.set_text(checksum)
         label.show()
         label = self.description_labels[filename]
-        label.set_markup("<b>%s</b>" % rom_set["name"])
+        label.set_markup(f"<b>{rom_set["name"]}</b>")
         category = rom_set["category"]["name"]
         label = self.category_labels[filename]
         label.set_text(category)
@@ -239,7 +245,9 @@ class ImportGameDialog(ModelessDialog):
         self.platform = guess_platform(rom_set)
 
         if not self.platform:
-            raise RuntimeError(_("The platform '%s' is unknown to Lutris.") % category)
+            raise RuntimeError(
+                _(f"The platform '{category}' is unknown to Lutris.")
+            )
 
     def add_game(self, rom_set, filepath):
         name = clean_rom_name(rom_set["name"])
@@ -249,7 +257,7 @@ class ImportGameDialog(ModelessDialog):
             installer = deepcopy(DEFAULT_INSTALLERS[self.platform])
         except KeyError as error:
             raise RuntimeError(
-                _("Lutris does not have a default installer for the '%s' platform.") % self.platform
+                _(f"Lutris does not have a default installer for the '{self.platform}' platform.")
             ) from error
 
         for key, value in installer["game"].items():
@@ -263,7 +271,7 @@ class ImportGameDialog(ModelessDialog):
             slug=slug,
             directory="",
             installed=1,
-            installer_slug="%s-%s" % (slug, installer["runner"]),
+            installer_slug=f"{slug}-{installer["runner"]}",
             configpath=configpath,
         )
         download_lutris_media(slug)

@@ -158,7 +158,9 @@ class RunnerInstallDialog(ModelessDialog):
             is_installed = os.path.exists(
                 get_runner_path(runner_directory, version_info["version"], version_info["architecture"])
             )
-            games_using = version_usage.get("%(version)s-%(architecture)s" % version_info)
+            games_using = version_usage.get(
+                f"{version_info['version']}-{version_info['architecture']}"
+            )
             runner_store.append(
                 {
                     "version": version_info["version"],
@@ -293,7 +295,7 @@ class RunnerInstallDialog(ModelessDialog):
     def on_show_apps_usage(self, _button, row):
         """Return grid with games that uses this wine version"""
         runner = row.runner
-        runner_version = "%s-%s" % (runner["version"], runner["architecture"])
+        runner_version = f"{runner["version"]}-{runner["architecture"]}"
         dialog = ShowAppsDialog(_("Wine version usage"), self.get_toplevel(), self.runner_name, runner_version)
         dialog.run()
 

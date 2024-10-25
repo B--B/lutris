@@ -109,7 +109,9 @@ class CommandLineUIDelegate(LaunchUIDelegate):
             if config.get("name") == self.launch_config_name:
                 return config
 
-        raise RuntimeError("The launch configuration '%s' could not be found." % self.launch_config_name)
+        raise RuntimeError(
+            f"The launch configuration '{self.launch_config_name}' could not be found."
+            )
 
 
 class DialogInstallUIDelegate(InstallUIDelegate):

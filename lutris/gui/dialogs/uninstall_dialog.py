@@ -264,13 +264,17 @@ class UninstallDialog(Gtk.Dialog):
         if dirs_to_delete:
             if len(dirs_to_delete) == 1:
                 question = _(
-                    "Please confirm.\nEverything under <b>%s</b>\n"
+                    "Please confirm.\n"
+                    "Everything under <b>%s</b>\n"
                     "will be moved to the trash."
                 ) % gtk_safe(
                     dirs_to_delete[0]
                 )
             else:
-                question = _("Please confirm.\nAll the files for %d games will be moved to the trash.") % len(
+                question = _(
+                    "Please confirm.\n"
+                    "All the files for %d games will be moved to the trash."
+                ) % len(
                     dirs_to_delete
                 )
 
@@ -396,7 +400,7 @@ class GameRemovalRow(Gtk.ListBoxRow):
         markup = gtk_safe(self.game.directory)
         if folder_size is not None:
             markup += f" <i>({human_size(folder_size)})</i>"
-        return "<span font_desc='8'>%s</span>" % markup
+        return f"<span font_desc='8'>{markup}</span>"
 
     def on_checkbox_toggled(self, _widget):
         self.emit("row-updated")

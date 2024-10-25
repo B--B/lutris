@@ -193,7 +193,7 @@ class GtkBuilderDialog(GObject.Object):
         super().__init__()
         ui_filename = os.path.join(datapath.get(), "ui", self.glade_file)
         if not os.path.exists(ui_filename):
-            raise ValueError("ui file does not exists: %s" % ui_filename)
+            raise ValueError(f"ui file does not exists: {ui_filename}")
 
         self.builder = Gtk.Builder()
         self.builder.add_from_file(ui_filename)
@@ -289,7 +289,11 @@ class ErrorDialog(Gtk.MessageDialog):
                 # you must pass the message itself directly.
                 message_markup = message_markup or gtk_safe(str(error))
             elif not message_markup:
-                message_markup = "<span weight='bold'>%s</span>" % _("Lutris has encountered an error")
+                message_markup = (
+                    "<span weight='bold'>%s</span>" % _(
+                        "Lutris has encountered an error"
+                    )
+                )
                 secondary = str(error)
         elif not message_markup:
             message_markup = gtk_safe(str(error))
