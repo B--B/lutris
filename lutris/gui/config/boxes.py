@@ -129,7 +129,7 @@ class ConfigBox(VBox):
         )
         help_box.pack_start(icon, False, False, 5)
 
-        title_label = Gtk.Label("<i>%s</i>" % text)
+        title_label = Gtk.Label(f"<i>{text}</i>")
         title_label.set_line_wrap(True)
         title_label.set_alignment(0, 0.5)
         title_label.set_use_markup(True)
@@ -388,7 +388,7 @@ class ConfigBox(VBox):
             )
         elif option_type == "string":
             if "label" not in option:
-                raise ValueError("Option %s has no label" % option)
+                raise ValueError(f"Option {option} has no label")
             self.generate_entry(
                 option_key,
                 option["label"],
@@ -424,7 +424,7 @@ class ConfigBox(VBox):
                 default=default
             )
         else:
-            raise ValueError("Unknown widget type %s" % option_type)
+            raise ValueError(f"Unknown widget type {option_type}")
 
     # Label
     def generate_label(self, text):
@@ -933,7 +933,7 @@ class ConfigBox(VBox):
         """Add custom style."""
         style_provider = Gtk.CssProvider()
         style_provider.load_from_data(
-            "GtkHBox {{{}: {};}}".format(property_, value).encode()
+             f"GtkHBox {{{property_}: {value};}}".encode()
         )
         style_context = wrapper.get_style_context()
         style_context.add_provider(

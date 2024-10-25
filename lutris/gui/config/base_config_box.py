@@ -20,13 +20,13 @@ class BaseConfigBox(VBox):
 
     def get_section_label(self, text: str) -> Gtk.Label:
         label = Gtk.Label(visible=True)
-        label.set_markup("<b>%s</b>" % text)
+        label.set_markup(f"<b>{text}</b>")
         label.set_alignment(0, 0.5)
         return label
 
     def get_description_label(self, text: str) -> Gtk.Label:
         label = Gtk.Label(visible=True)
-        label.set_markup("%s" % text)
+        label.set_markup(f"{text}")
         label.set_line_wrap(True)
         label.set_alignment(0, 0.5)
         return label

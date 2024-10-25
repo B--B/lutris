@@ -154,7 +154,7 @@ class SystemBox(BaseConfigBox):
                     yalign=0,
                     margin_top=16
                 )
-                header_label.set_markup("<b>[%s]</b>" % gtk_safe(item))
+                header_label.set_markup(f"<b>[{gtk_safe(item)}]</b>")
                 if row == 0:
                     grid.set_margin_top(0)
                 grid.attach(header_label, 0, row, 2, 1)
@@ -174,7 +174,7 @@ class SystemBox(BaseConfigBox):
                     xalign=0,
                     selectable=True
                 )
-                markup_label.set_markup("<b>%s</b>" % gtk_safe(text))
+                markup_label.set_markup(f"<b>{gtk_safe(text)}</b>")
                 grid.attach(markup_label, 1, row, 1, 1)
             row += 1
         return grid

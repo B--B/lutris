@@ -429,4 +429,4 @@ class UpdateButtonBox(Gtk.Box):
         self.result_label.show()
         self.spinner.stop()
         self.spinner.hide()
-        self.result_label.set_markup("<b>Error:</b>%s" % gtk_safe(str(error)))
+        self.result_label.set_markup(f"<b>Error:</b>{gtk_safe(str(error))}")

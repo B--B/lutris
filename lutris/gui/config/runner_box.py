@@ -41,7 +41,7 @@ class RunnerBox(Gtk.Box):
 
         runner_label = Gtk.Label(visible=True)
         runner_label.set_alignment(0, 0.5)
-        runner_label.set_markup("<b>%s</b>" % self.runner.human_name)
+        runner_label.set_markup(f"<b>{self.runner.human_name}</b>")
         self.runner_label_box.pack_start(runner_label, False, False, 0)
 
         desc_label = Gtk.Label(visible=True)

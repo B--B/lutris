@@ -54,7 +54,7 @@ class StorageBox(BaseConfigBox):
 
     def get_directory_chooser(self, path_setting):
         label = Label()
-        label.set_markup("<b>%s</b>" % path_setting["name"])
+        label.set_markup(f"<b>{path_setting["name"]}</b>")
         wrapper = Gtk.Box(
             orientation=Gtk.Orientation.HORIZONTAL,
             spacing=4,
@@ -85,7 +85,7 @@ class StorageBox(BaseConfigBox):
             )
             help_wrapper.add(wrapper)
             help_label = Label()
-            help_label.set_markup("<i>%s</i>" % path_setting["help"])
+            help_label.set_markup(f"<i>{path_setting["help"]}</i>")
             help_wrapper.add(help_label)
             wrapper = help_wrapper
         wrapper.set_margin_start(16)

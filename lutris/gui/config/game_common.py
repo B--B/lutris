@@ -505,7 +505,7 @@ class GameDialogCommon(SavableModelessDialog, DialogInstallUIDelegate):
         runner_liststore.append((_("Select a runner from the list"), ""))
         for runner in runners.get_installed():
             description = runner.description
-            runner_label = "%s (%s)" % (runner.human_name, description)
+            runner_label = f"{runner.human_name} ({description})"
             runner_liststore.append((runner_label, runner.name))
         return runner_liststore
 
@@ -555,12 +555,12 @@ class GameDialogCommon(SavableModelessDialog, DialogInstallUIDelegate):
             self.directory_entry.set_text(new_directory)
             send_notification(
                 "Finished moving game",
-                "%s moved to %s" % (dialog.game, new_directory)
+                f"{dialog.game} moved to {new_directory}"
             )
         else:
             send_notification(
                 "Failed to move game",
-                "Lutris could not move %s" % dialog.game
+                f"Lutris could not move {dialog.game}"
             )
 
     def _build_game_tab(self):
