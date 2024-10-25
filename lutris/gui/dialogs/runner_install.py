@@ -20,6 +20,7 @@ from lutris.util.downloader import Downloader
 from lutris.util.extract import extract_archive
 from lutris.util.jobs import schedule_repeating_at_idle
 from lutris.util.log import logger
+from lutris.util.wine.wine import clear_wine_version_cache
 
 
 def get_runner_path(runner_directory, version, arch):
@@ -340,7 +341,6 @@ class RunnerInstallDialog(ModelessDialog):
             runner["is_installed"] = False
             if self.runner_name == "wine":
                 logger.debug("Clearing wine version cache")
-                from lutris.util.wine.wine import clear_wine_version_cache
 
                 clear_wine_version_cache()
             self.update_listboxrow(row)
@@ -434,7 +434,6 @@ class RunnerInstallDialog(ModelessDialog):
         self.update_listboxrow(row)
         if self.runner_name == "wine":
             logger.debug("Clearing wine version cache")
-            from lutris.util.wine.wine import clear_wine_version_cache
 
             clear_wine_version_cache()
 
