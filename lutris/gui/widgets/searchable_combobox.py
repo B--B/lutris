@@ -1,13 +1,12 @@
 """Extended combobox with search"""
 
-# pylint: disable=unsubscriptable-object
 from gi.repository import GLib, GObject, Gtk
 
 from lutris.gui.dialogs import display_error
 
 
-class SearchableCombobox(Gtk.Bin):
-    """Combox box with autocompletion.
+class SearchableCombobox(Gtk.Box):
+    """Combo box with autocompletion.
     Well fitted for large lists.
     """
 
@@ -16,35 +15,38 @@ class SearchableCombobox(Gtk.Bin):
     }
 
     def __init__(self, choice_func, initial=None):
-        super().__init__()
+        super().__init__(orientation=Gtk.Orientation.HORIZONTAL)
         self.initial = initial
         self.liststore = Gtk.ListStore(str, str)
-        self.combobox = Gtk.ComboBox.new_with_model_and_entry(self.liststore)
-        self.combobox.set_entry_text_column(0)
-        self.combobox.set_id_column(1)
-        self.combobox.set_valign(Gtk.Align.CENTER)
+        self.entry = Gtk.Entry()
 
-        completion = Gtk.EntryCompletion()
-        completion.set_model(self.liststore)
-        completion.set_text_column(0)
-        completion.set_match_func(self.search_store)
-        completion.connect("match-selected", self.set_id_from_completion)
-        entry = self.combobox.get_child()
-        entry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, "content-loading-symbolic")
-        entry.set_completion(completion)
+        self.completion = Gtk.EntryCompletion()
+        self.completion.set_model(self.liststore)
+        self.completion.set_text_column(0)
+        self.completion.set_match_func(self.search_store)
+        self.entry.set_icon_from_icon_name(
+            Gtk.EntryIconPosition.PRIMARY,
+            "content-loading-symbolic"
+        )
+        self.entry.set_completion(self.completion)
 
-        self.combobox.connect("changed", self.on_combobox_change)
-        self.combobox.connect("scroll-event", self._on_combobox_scroll)
-        self.add(self.combobox)
+        self.entry.connect("changed", self.on_combobox_change)
+        self.entry.connect("scroll-event", self._on_combobox_scroll)
+        # pack_start deprecated in Gtk4, append should be used
+        self.pack_start(self.entry, True, True, 0)
         GLib.idle_add(self._populate_combobox_choices, choice_func)
 
     def get_model(self):
         """Proxy to the liststore"""
         return self.liststore
 
-    def get_active(self):
+    def get_active_id(self):
         """Proxy to the get_active method"""
-        return self.combobox.get_active()
+        text = self.entry.get_text()
+        for row in self.liststore:
+            if row[0] == text:
+                return row[1]
+        return None
 
     @staticmethod
     def get_has_entry():
@@ -58,21 +60,27 @@ class SearchableCombobox(Gtk.Bin):
                 return False
         return True
 
-    def set_id_from_completion(self, _completion, model, _iter):
-        """Sets the active ID to the appropriate ID column in the model
-        otherwise the value is set to the entry's value.
-        """
-        self.combobox.set_active_id(model[_iter][1])
-
     def _populate_combobox_choices(self, choice_func):
         try:
             for choice in choice_func():
                 self.liststore.append(choice)
-            entry = self.combobox.get_child()
-            entry.set_icon_from_icon_name(Gtk.EntryIconPosition.PRIMARY, None)
-            self.combobox.set_active_id(self.initial)
+            if self.initial:
+                for row in self.liststore:
+                    if row[1] == self.initial:
+                        self.entry.set_text(row[0])
+                        break
         except Exception as ex:
+            self.entry.set_icon_from_icon_name(
+                Gtk.EntryIconPosition.PRIMARY,
+                "dialog-error-symbolic"
+            )
+            # get_toplevel deprecated in Gtk4, get_root should be used
             display_error(ex, parent=self.get_toplevel())
+
+        self.entry.set_icon_from_icon_name(
+            Gtk.EntryIconPosition.PRIMARY,
+            None
+        )
 
     @staticmethod
     def _on_combobox_scroll(combobox, _event):
@@ -84,8 +92,7 @@ class SearchableCombobox(Gtk.Bin):
 
     def on_combobox_change(self, _widget):
         """Action triggered on combobox 'changed' signal."""
-        active = self.combobox.get_active()
-        if active < 0:
+        active_id = self.get_active_id()  # Obtain the active ID
+        if active_id is None:
             return
-        option_value = self.liststore[active][1]
-        self.emit("changed", option_value)
+        self.emit("changed", active_id)
