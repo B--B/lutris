@@ -28,8 +28,6 @@ from typing import List
 
 import gi
 
-from ..util.busy import BusyAsyncCall
-
 gi.require_version("Gdk", "3.0")
 gi.require_version("Gtk", "3.0")
 
@@ -49,7 +47,12 @@ from lutris.gui.widgets.status_icon import LutrisStatusIcon
 from lutris.installer import get_installers
 from lutris.migrations import migrate
 from lutris.monitored_command import exec_command
-from lutris.runners import InvalidRunnerError, RunnerInstallationError, get_runner_names, import_runner
+from lutris.runners import (
+    InvalidRunnerError,
+    RunnerInstallationError,
+    get_runner_names,
+    import_runner
+)
 from lutris.services import get_enabled_services
 from lutris.startup import init_lutris, run_all_checks
 from lutris.style_manager import StyleManager
@@ -59,6 +62,8 @@ from lutris.util.log import file_handler, logger
 from lutris.util.savesync import save_check, show_save_stats, upload_save
 from lutris.util.steam.appmanifest import AppManifest, get_appmanifests
 from lutris.util.steam.config import get_steamapps_dirs
+
+from ..util.busy import BusyAsyncCall
 
 from .lutriswindow import LutrisWindow
 
@@ -121,7 +126,10 @@ class Application(Gtk.Application):
                 )
             )
         else:
-            logger.warning("GLib.set_option_context_summary missing, was added in GLib 2.56 (Released 2018-03-12)")
+            logger.warning(
+                "GLib.set_option_context_summary missing, was added in GLib "
+                "2.56 (Released 2018-03-12)"
+                )
         self.add_main_option(
             "version",
             ord("v"),
@@ -316,7 +324,14 @@ class Application(Gtk.Application):
             _("Reinstall game"),
             None,
         )
-        self.add_main_option("submit-issue", 0, GLib.OptionFlags.NONE, GLib.OptionArg.NONE, _("Submit an issue"), None)
+        self.add_main_option(
+            "submit-issue",
+            0,
+            GLib.OptionFlags.NONE,
+            GLib.OptionArg.NONE,
+            _("Submit an issue"),
+            None
+        )
         self.add_main_option(
             GLib.OPTION_REMAINING,
             0,
@@ -343,7 +358,11 @@ class Application(Gtk.Application):
         if not self.window:
             self.window = LutrisWindow(application=self)
             screen = self.window.props.screen  # pylint: disable=no-member
-            Gtk.StyleContext.add_provider_for_screen(screen, self.css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+            Gtk.StyleContext.add_provider_for_screen(
+                screen,
+                self.css_provider,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+            )
 
     def start_runtime_updates(self) -> None:
         if os.environ.get("LUTRIS_SKIP_INIT"):
@@ -367,7 +386,8 @@ class Application(Gtk.Application):
 
         Params:
             window_class (Gtk.Window): class to create the instance from
-            update_function (Callable): Function to initialize or update the window (if possible before being shown)
+            update_function (Callable): Function to initialize or update the
+            window (if possible before being shown)
             kwargs (dict): Additional arguments to pass to the instanciated window
 
         Returns:
@@ -396,9 +416,18 @@ class Application(Gtk.Application):
         window_inst.show()
         return window_inst
 
-    def show_installer_window(self, installers, service=None, appid=None, installation_kind=InstallationKind.INSTALL):
+    def show_installer_window(
+        self,installers,
+        service=None,
+        appid=None,
+        installation_kind=InstallationKind.INSTALL
+    ):
         self.show_window(
-            InstallerWindow, installers=installers, service=service, appid=appid, installation_kind=installation_kind
+            InstallerWindow,
+            installers=installers,
+            service=service,
+            appid=appid,
+            installation_kind=installation_kind
         )
 
     def show_lutris_installer_window(self, game_slug):
@@ -488,7 +517,9 @@ class Application(Gtk.Application):
 
         # List game
         if options.contains("list-games"):
-            game_list = games_db.get_games(filters=({"installed": 1} if options.contains("installed") else None))
+            game_list = games_db.get_games(
+                filters=({"installed": 1} if options.contains("installed") else None)
+            )
             if options.contains("json"):
                 self.print_game_json(command_line, game_list)
             else:
@@ -501,7 +532,10 @@ class Application(Gtk.Application):
             game_list = games_db.get_games(filters={"installed": 1, "service": service})
             service_game_list = ServiceGameCollection.get_for_service(service)
             for game in service_game_list:
-                game["installed"] = any(("service_id", game["appid"]) in item.items() for item in game_list)
+                game["installed"] = any(
+                    ("service_id", game["appid"])
+                    in item.items() for item in game_list
+                )
             if options.contains("installed"):
                 service_game_list = [d for d in service_game_list if d["installed"]]
             if options.contains("json"):
@@ -599,7 +633,12 @@ class Application(Gtk.Application):
             if options.contains("save-stats"):
                 game = get_game_match(options.lookup_value("save-stats").get_string())
                 if game:
-                    show_save_stats(game, output_format="json" if options.contains("json") else "text")
+                    show_save_stats(
+                        game,
+                        output_format="json"
+                        if options.contains("json")
+                        else "text"
+                    )
                 return 0
             if options.contains("save-upload"):
                 game = get_game_match(options.lookup_value("save-upload").get_string())
@@ -658,7 +697,10 @@ class Application(Gtk.Application):
                     file_name = os.path.basename(installer_file)
                 file_path = os.path.join(tempfile.gettempdir(), file_name)
                 self._print(
-                    command_line, _("download {url} to {file} started").format(url=installer_file, file=file_path)
+                    command_line,
+                    _(
+                        "download {url} to {file} started"
+                    ).format(url=installer_file, file=file_path)
                 )
                 with open(file_path, "wb") as dest_file:
                     dest_file.write(request.content)
@@ -685,7 +727,10 @@ class Application(Gtk.Application):
             elif action == "install":
                 # Installers can use game or installer slugs
                 self.quit_on_game_exit = True
-                db_game = games_db.get_game_by_field(game_slug, "slug") or games_db.get_game_by_field(
+                db_game = games_db.get_game_by_field(
+                    game_slug,
+                    "slug"
+                ) or games_db.get_game_by_field(
                     game_slug, "installer_slug"
                 )
             else:
@@ -882,7 +927,10 @@ class Application(Gtk.Application):
                 "year": game["year"] or None,
                 "directory": game["directory"] or None,
                 "playtime": (str(timedelta(hours=game["playtime"])) if game["playtime"] else None),
-                "lastplayed": (str(datetime.fromtimestamp(game["lastplayed"])) if game["lastplayed"] else None),
+                "lastplayed": (
+                    str(datetime.fromtimestamp(game["lastplayed"]))
+                    if game["lastplayed"] else None
+                ),
             }
             for game in game_list
         ]
@@ -956,8 +1004,8 @@ class Application(Gtk.Application):
             print(name)
 
     def print_wine_runners(self):
-        runnersName = get_runners("wine")
-        for i in runnersName["versions"]:
+        runners_name = get_runners("wine")
+        for i in runners_name["versions"]:
             if i["version"]:
                 print(i)
 
@@ -985,8 +1033,11 @@ class Application(Gtk.Application):
         Downloads wine runner using lutris -r <runner>
         """
 
-        WINE_DIR = os.path.join(settings.RUNNER_DIR, "wine")
-        runner_path = os.path.join(WINE_DIR, f"{version}{'' if '-x86_64' in version else '-x86_64'}")
+        wine_dir = os.path.join(settings.RUNNER_DIR, "wine")
+        runner_path = os.path.join(
+            wine_dir,
+            f"{version}{'' if '-x86_64' in version else '-x86_64'}"
+        )
         if os.path.isdir(runner_path):
             print(f"Wine version '{version}' is already installed.")
         else:
@@ -999,8 +1050,8 @@ class Application(Gtk.Application):
 
     def wine_runner_uninstall(self, version):
         version = f"{version}{'' if '-x86_64' in version else '-x86_64'}"
-        WINE_DIR = os.path.join(settings.RUNNER_DIR, "wine")
-        runner_path = os.path.join(WINE_DIR, version)
+        wine_dir = os.path.join(settings.RUNNER_DIR, "wine")
+        runner_path = os.path.join(wine_dir, version)
         if os.path.isdir(runner_path):
             system.remove_folder(runner_path)
             print(f"Wine version '{version}' has been removed.")
@@ -1051,7 +1102,9 @@ Also, check that the version specified is in the correct format.
     def do_shutdown(self):  # pylint: disable=arguments-differ
         logger.info("Shutting down Lutris")
         if self.window:
-            selected_category = "%s:%s" % self.window.selected_category
+            selected_category = (
+                f"{self.window.selected_category[0]}:{self.window.selected_category[1]}"
+            )
             settings.write_setting("selected_category", selected_category)
             self.window.destroy()
         Gtk.Application.do_shutdown(self)
