@@ -272,11 +272,32 @@ def decompress_gz(file_path: str, dest_path: str):
 
 
 def extract_7zip(path: str, dest: str, archive_type: str = None) -> None:
-    """Decompress a file with p7zip."""
+    """Test and then decompress a file with p7zip, if integrity is verified."""
     _7zip_path = os.path.join(settings.RUNTIME_DIR, "p7zip/7z")
     if not system.path_exists(_7zip_path):
         _7zip_path = system.find_required_executable("7z")
-    command = [_7zip_path, "x", path, "-o{}".format(dest), "-aoa"]
+
+    # Step 1: Test archive integrity
+    test_command = [_7zip_path, "t", path]
     if archive_type and archive_type != "auto":
-        command.append("-t{}".format(archive_type))
-    subprocess.call(command)
+        test_command.append(f"-t{archive_type}")
+
+    test_result = subprocess.run(test_command, capture_output=True, text=True, check=False)
+    if test_result.returncode != 0:
+        error_message = test_result.stderr.strip()
+        raise ExtractError(
+            f"Integrity test failed. Archive may be corrupted.\n{error_message or 'Unknown error'}"
+        )
+
+    # Step 2: Extract if integrity test passed
+    extract_command = [_7zip_path, "x", path, f"-o{dest}", "-aoa"]
+    if archive_type and archive_type != "auto":
+        extract_command.append(f"-t{archive_type}")
+
+    extract_result = subprocess.run(extract_command, capture_output=True, text=True, check=False)
+    if extract_result.returncode != 0:
+        error_message = extract_result.stderr.strip()
+        raise ExtractError(
+            f"p7zip extraction error detected, some files may be corrupted "
+            f"or not extracted at all.\n{error_message or 'Unknown error'}"
+        )
