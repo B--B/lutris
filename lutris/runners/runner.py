@@ -9,7 +9,11 @@ from lutris import runtime, settings
 from lutris.api import format_runner_version, get_default_runner_version_info
 from lutris.config import LutrisConfig
 from lutris.database.games import get_game_by_field
-from lutris.exceptions import MisconfigurationError, MissingExecutableError, UnavailableLibrariesError
+from lutris.exceptions import (
+    MisconfigurationError,
+    MissingExecutableError,
+    UnavailableLibrariesError
+)
 from lutris.monitored_command import MonitoredCommand
 from lutris.runners import RunnerInstallationError
 from lutris.util import flatpak, strings, system
@@ -17,7 +21,7 @@ from lutris.util.extract import ExtractError, extract_archive
 from lutris.util.graphics.gpu import GPUS
 from lutris.util.linux import LINUX_SYSTEM
 from lutris.util.log import logger
-
+from lutris.util.wine.wine import clear_wine_version_cache
 
 class Runner:  # pylint: disable=too-many-public-methods
     """Generic runner (base class for other runners)."""
@@ -152,6 +156,7 @@ class Runner:  # pylint: disable=too-many-public-methods
     def discord_client_id(self):
         if self.game_data.get("discord_client_id"):
             return self.game_data.get("discord_client_id")
+        return None
 
     def get_platform(self):
         return self.platforms[0]
@@ -177,7 +182,10 @@ class Runner:  # pylint: disable=too-many-public-methods
                 "default": True,
                 "advanced": True,
                 "scope": ["runner"],
-                "help": _("Show this runner in the side panel if it is installed or available through Flatpak."),
+                "help": _(
+                    "Show this runner in the side panel if it is "
+                    "installed or available through Flatpak."
+                ),
             }
         )
         return runner_options
@@ -188,11 +196,13 @@ class Runner:  # pylint: disable=too-many-public-methods
             if os.path.isfile(runner_executable):
                 return runner_executable
         if not self.runner_executable:
-            raise MisconfigurationError("runner_executable not set for {}".format(self.name))
+            raise MisconfigurationError(f"runner_executable not set for {self.name}")
 
         exe = os.path.join(settings.RUNNER_DIR, self.runner_executable)
         if not os.path.isfile(exe):
-            raise MissingExecutableError(_("The executable '%s' could not be found.") % self.runner_executable)
+            raise MissingExecutableError(
+                _("The executable '%s' could not be found.") % self.runner_executable
+            )
         return exe
 
     def get_command(self):
@@ -268,7 +278,9 @@ class Runner:  # pylint: disable=too-many-public-methods
 
         if runtime_ld_library_path:
             ld_library_path = env.get("LD_LIBRARY_PATH")
-            env["LD_LIBRARY_PATH"] = os.pathsep.join(filter(None, [runtime_ld_library_path, ld_library_path]))
+            env["LD_LIBRARY_PATH"] = os.pathsep.join(
+                filter(None, [runtime_ld_library_path, ld_library_path])
+            )
 
         # Apply user overrides at the end
         env.update(self.system_config.get("env") or {})
@@ -278,7 +290,6 @@ class Runner:  # pylint: disable=too-many-public-methods
     def finish_env(self, env: Dict[str, str], game) -> None:
         """This is called by the Game after setting up the environment to allow the runner
         to make final adjustments, which may be based on the environment so far."""
-        pass
 
     def get_runtime_env(self):
         """Return runtime environment variables.
@@ -290,7 +301,9 @@ class Runner:  # pylint: disable=too-many-public-methods
             dict
 
         """
-        return runtime.get_env(prefer_system_libs=self.system_config.get("prefer_system_libs", True))
+        return runtime.get_env(
+            prefer_system_libs=self.system_config.get("prefer_system_libs", True)
+        )
 
     def apply_launch_config(self, gameplay_info, launch_config):
         """Updates the gameplay_info to reflect a launch_config section. Called only
@@ -436,7 +449,10 @@ class Runner:  # pylint: disable=too-many-public-methods
         """
 
         if ui_delegate.show_install_yesno_inquiry(
-            question=_("The required runner is not installed.\n" "Do you wish to install it now?"),
+            question=_(
+                "The required runner is not installed.\n"
+                "Do you wish to install it now?"
+            ),
             title=_("Required runner unavailable"),
         ):
             if hasattr(self, "get_version"):
@@ -458,20 +474,26 @@ class Runner:  # pylint: disable=too-many-public-methods
         except MisconfigurationError:
             pass  # We can still try flatpak even if 'which' fails us!
 
-        return bool(flatpak_allowed and self.flatpak_id and flatpak.is_app_installed(self.flatpak_id))
+        return bool(
+            flatpak_allowed and self.flatpak_id
+            and flatpak.is_app_installed(self.flatpak_id)
+        )
 
     def is_installed_for(self, interpreter):
         """Returns whether the runner is installed. Specific runners can extract additional
         script settings, to determine more precisely what must be installed."""
         return self.is_installed()
 
-    def get_installer_runner_version(self, installer, use_runner_config: bool = True) -> Optional[str]:
+    def get_installer_runner_version(
+        self,
+        installer,
+        use_runner_config: bool = True
+    ) -> Optional[str]:
         return None
 
     def adjust_installer_runner_config(self, installer_runner_config: Dict[str, Any]) -> None:
         """This is called during installation to let to run fix up in the runner's section of
         the configuration before it is saved. This method should modify the dict given."""
-        pass
 
     def get_runner_version(self, version: str = None) -> Optional[Dict[str, str]]:
         """Get the appropriate version for a runner, as with get_default_runner_version(),
@@ -492,15 +514,18 @@ class Runner:  # pylint: disable=too-many-public-methods
             return self.download_and_extract(self.download_url, **opts)
         runner_version_info = self.get_runner_version(version)
         if not runner_version_info:
-            raise RunnerInstallationError(_("Failed to retrieve {} ({}) information").format(self.name, version))
+            raise RunnerInstallationError(
+                _("Failed to retrieve {} ({}) information").format(self.name, version)
+            )
 
         if "url" not in runner_version_info:
             if version:
                 raise RunnerInstallationError(
-                    _("The '%s' version of the '%s' runner can't be downloaded." % (version, self.name))
+                    _(f"The '{version}' version of the '{self.name}' runner can't be downloaded.")
                 )
-            else:
-                raise RunnerInstallationError(_("The the '%s' runner can't be downloaded." % self.name))
+            raise RunnerInstallationError(
+                _(f"The '{self.name}' runner can't be downloaded.")
+            )
 
         if "wine" in self.name:
             opts["merge_single"] = True
@@ -511,6 +536,7 @@ class Runner:  # pylint: disable=too-many-public-methods
             opts["dest"] = os.path.join(settings.RUNNER_DIR, "retroarch/cores")
 
         self.download_and_extract(runner_version_info["url"], **opts)
+        return None
 
     def download_and_extract(self, url, dest=None, **opts):
         install_ui_delegate = opts["install_ui_delegate"]
@@ -544,8 +570,6 @@ class Runner:  # pylint: disable=too-many-public-methods
 
         if self.name == "wine":
             logger.debug("Clearing wine version cache")
-            from lutris.util.wine.wine import clear_wine_version_cache
-
             clear_wine_version_cache()
 
         if self.runner_executable:
