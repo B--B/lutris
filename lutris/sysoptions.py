@@ -116,6 +116,22 @@ system_options = [  # pylint: disable=invalid-name
         ),
     },
     {
+        "section": _("Lutris"),
+        "option": "enable_p7zip_archive_verify",
+        "type": "bool",
+        "label": _("Enable p7zip integrity check"),
+        "default": True,
+        "advanced": True,
+        "help": _(
+            "If disabled when p7zip is used for archive decompression during runners and "
+            "games installation it will try to extract the archive without executing an "
+            "integrity check before. Disabling the check will reduce decompression time, "
+            "but may lead to undesided behaviours, runner not working or corrupted runner "
+            "files. Disable this option only if you have a very old CPU and decompression "
+            "is terribly slow."
+        ),
+    },
+    {
         "section": _("Display"),
         "option": "gpu",
         "type": "choice",

@@ -282,12 +282,16 @@ def extract_7zip(path: str, dest: str, archive_type: str = None) -> None:
     if archive_type and archive_type != "auto":
         test_command.append(f"-t{archive_type}")
 
-    test_result = subprocess.run(test_command, capture_output=True, text=True, check=False)
-    if test_result.returncode != 0:
-        error_message = test_result.stderr.strip()
-        raise ExtractError(
-            f"Integrity test failed. Archive may be corrupted.\n{error_message or 'Unknown error'}"
-        )
+    if settings.read_setting("enable_p7zip_archive_verify") == "True":
+        test_result = subprocess.run(test_command, capture_output=True, text=True, check=False)
+        if test_result.returncode != 0:
+            error_message = test_result.stderr.strip()
+            raise ExtractError(
+                f"Integrity test failed. Archive may be corrupted.\n"
+                f"{error_message or 'Unknown error'}"
+            )
+    else:
+        logger.info("7zip integrity check disabled by the user")
 
     # Step 2: Extract if integrity test passed
     extract_command = [_7zip_path, "x", path, f"-o{dest}", "-aoa"]
