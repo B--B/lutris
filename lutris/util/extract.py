@@ -21,56 +21,6 @@ def random_id():
     """Return a random ID"""
     return str(uuid.uuid4())[:8]
 
-
-def is_7zip_supported(path, extractor):
-    supported_extractors = (
-        "7z",
-        "xz",
-        "bzip2",
-        "gzip",
-        "tar",
-        "zip",
-        "ar",
-        "arj",
-        "cab",
-        "chm",
-        "cpio",
-        "cramfs",
-        "dmg",
-        "ext",
-        "fat",
-        "gpt",
-        "hfs",
-        "ihex",
-        "iso",
-        "lzh",
-        "lzma",
-        "mbr",
-        "msi",
-        "nsis",
-        "ntfs",
-        "qcow2",
-        "rar",
-        "rpm",
-        "squashfs",
-        "udf",
-        "uefi",
-        "vdi",
-        "vhd",
-        "vmdk",
-        "wim",
-        "xar",
-        "z",
-        "auto",
-    )
-    if extractor:
-        return extractor.lower() in supported_extractors
-    _base, ext = os.path.splitext(path)
-    if ext:
-        ext = ext.lstrip(".").lower()
-        return ext in supported_extractors
-
-
 def guess_extractor(path):
     """Guess what extractor should be used from a file name"""
     if path.endswith(".tar"):
@@ -124,7 +74,13 @@ def get_archive_opener(extractor):
     return opener, mode
 
 
-def extract_archive(path: str, to_directory: str = ".", merge_single: bool = True, extractor=None) -> Tuple[str, str]:
+def extract_archive(
+    path: str,
+    to_directory: str = ".",
+    merge_single: bool = True,
+    extractor=None
+) -> Tuple[str, str]:
+    """Extract an archive."""
     path = os.path.abspath(path)
     logger.debug("Extracting %s to %s", path, to_directory)
 
@@ -133,7 +89,7 @@ def extract_archive(path: str, to_directory: str = ".", merge_single: bool = Tru
 
     opener, mode = get_archive_opener(extractor)
 
-    temp_path = temp_dir = os.path.join(to_directory, ".extract-%s" % random_id())
+    temp_path = temp_dir = os.path.join(to_directory, f".extract-{random_id()}")
     try:
         _do_extract(path, temp_path, opener, mode, extractor)
     except (OSError, zlib.error, tarfile.ReadError, EOFError) as ex:
@@ -194,7 +150,7 @@ def _do_extract(archive: str, dest: str, opener, mode: str = None, extractor=Non
     elif opener == "deb":
         extract_deb(archive, dest)
     elif opener == "AppImage":
-        extract_AppImage(archive, dest)
+        extract_appimage(archive, dest)
     else:
         handler = opener(archive, mode)
         handler.extractall(dest)
@@ -202,6 +158,7 @@ def _do_extract(archive: str, dest: str, opener, mode: str = None, extractor=Non
 
 
 def extract_exe(path: str, dest: str) -> None:
+    """Extract an exe file."""
     if check_inno_exe(path):
         decompress_gog(path, dest)
     else:
@@ -225,21 +182,21 @@ def extract_deb(archive: str, dest: str) -> None:
 
     control_file_exts = [".gz", ".xz", ".zst", ""]
     for extension in control_file_exts:
-        control_tar_path = os.path.join(dest, "control.tar{}".format(extension))
+        control_tar_path = os.path.join(dest, f"control.tar{extension}")
         if os.path.exists(control_tar_path):
             shutil.move(control_tar_path, debian_folder)
             break
 
     data_file_exts = [".gz", ".xz", ".zst", ".bz2", ".lzma", ""]
     for extension in data_file_exts:
-        data_tar_path = os.path.join(dest, "data.tar{}".format(extension))
+        data_tar_path = os.path.join(dest, f"data.tar{extension}")
         if os.path.exists(data_tar_path):
             extract_archive(data_tar_path, dest)
             os.remove(data_tar_path)
             break
 
 
-def extract_AppImage(path: str, dest: str) -> None:
+def extract_appimage(path: str, dest: str) -> None:
     """This is really here to prevent 7-zip from extracting the AppImage;
     we want to just use this sort of file as-is."""
     system.create_folder(dest)
@@ -247,6 +204,7 @@ def extract_AppImage(path: str, dest: str) -> None:
 
 
 def extract_gog(path: str, dest: str) -> None:
+    """Extract gog files."""
     if check_inno_exe(path):
         decompress_gog(path, dest)
     else:
@@ -255,7 +213,10 @@ def extract_gog(path: str, dest: str) -> None:
 
 def get_innoextract_path() -> str:
     """Return the path where innoextract is installed"""
-    inno_dirs = [path for path in os.listdir(settings.RUNTIME_DIR) if path.startswith("innoextract")]
+    inno_dirs = [
+        path for path in os.listdir(settings.RUNTIME_DIR)
+        if path.startswith("innoextract")
+    ]
     for inno_dir in inno_dirs:
         inno_path = os.path.join(settings.RUNTIME_DIR, inno_dir, "innoextract")
         if system.path_exists(inno_path):
@@ -286,9 +247,12 @@ def get_innoextract_list(file_path: str) -> List[str]:
 
 
 def decompress_gog(file_path: str, destination_path: str) -> None:
+    """Decompress a gog file with innoextract."""
     innoextract_path = get_innoextract_path()
     system.create_folder(destination_path)  # innoextract cannot do mkdir -p
-    return_code = subprocess.call([innoextract_path, "-m", "-g", "-d", destination_path, "-e", file_path])
+    return_code = subprocess.call(
+        [innoextract_path, "-m", "-g", "-d", destination_path, "-e", file_path]
+    )
     if return_code != 0:
         raise RuntimeError("innoextract failed to extract GOG setup file")
 
@@ -308,6 +272,7 @@ def decompress_gz(file_path: str, dest_path: str):
 
 
 def extract_7zip(path: str, dest: str, archive_type: str = None) -> None:
+    """Decompress a file with p7zip."""
     _7zip_path = os.path.join(settings.RUNTIME_DIR, "p7zip/7z")
     if not system.path_exists(_7zip_path):
         _7zip_path = system.find_required_executable("7z")
