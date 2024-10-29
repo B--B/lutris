@@ -6,7 +6,12 @@ from gettext import gettext as _
 
 from lutris import runners
 from lutris.util import linux, system
-from lutris.util.display import DISPLAY_MANAGER, SCREEN_SAVER_INHIBITOR, is_compositing_enabled, is_display_x11
+from lutris.util.display import (
+    DISPLAY_MANAGER,
+    SCREEN_SAVER_INHIBITOR,
+    is_compositing_enabled,
+    is_display_x11
+)
 from lutris.util.graphics.gpu import GPUS
 
 
@@ -47,6 +52,7 @@ def get_locale_choices():
 
 
 def get_gpu_list():
+    """Return list of GPUs with display name and identifier"""
     choices = [(_("Auto"), "")]
     for card, gpu in GPUS.items():
         choices.append((gpu.short_name, card))
@@ -104,7 +110,10 @@ system_options = [  # pylint: disable=invalid-name
         "type": "bool",
         "label": _("Prefer system libraries"),
         "default": True,
-        "help": _("When the runtime is enabled, prioritize the system libraries" " over the provided ones."),
+        "help": _(
+            "When the runtime is enabled, prioritize the system libraries "
+            "over the provided ones."
+        ),
     },
     {
         "section": _("Display"),
@@ -123,7 +132,9 @@ system_options = [  # pylint: disable=invalid-name
         "label": _("FPS counter (MangoHud)"),
         "default": False,
         "condition": system.can_find_executable("mangohud"),
-        "help": _("Display the game's FPS + other information. Requires MangoHud to be installed."),
+        "help": _(
+            "Display the game's FPS + other information. Requires MangoHud to be installed."
+        ),
     },
     {
         "section": _("Display"),
@@ -148,7 +159,10 @@ system_options = [  # pylint: disable=invalid-name
         "advanced": True,
         "visible": is_display_x11,
         "condition": is_compositing_enabled,
-        "help": _("Disable desktop effects while game is running, " "reducing stuttering and increasing performance"),
+        "help": _(
+            "Disable desktop effects while game is running, "
+            "reducing stuttering and increasing performance"
+        ),
     },
     {
         "section": _("Display"),
@@ -212,8 +226,14 @@ system_options = [  # pylint: disable=invalid-name
         "type": "bool",
         "label": _("Enable Gamescope"),
         "default": False,
-        "condition": system.can_find_executable("gamescope") and linux.LINUX_SYSTEM.nvidia_gamescope_support(),
-        "help": _("Use gamescope to draw the game window isolated from your desktop.\n" "Toggle fullscreen: Super + F"),
+        "condition": (
+            system.can_find_executable("gamescope")
+            and linux.LINUX_SYSTEM.nvidia_gamescope_support()
+        ),
+        "help": _(
+            "Use gamescope to draw the game window isolated from your desktop.\n"
+            "Toggle fullscreen: Super + F"
+        ),
     },
     {
         "section": _("Gamescope"),
@@ -223,7 +243,10 @@ system_options = [  # pylint: disable=invalid-name
         "advanced": False,
         "default": False,
         "condition": bool(system.can_find_executable("gamescope")),
-        "help": _("Enable HDR for games that support it.\n" "Requires Plasma 6 and VK_hdr_layer."),
+        "help": _(
+            "Enable HDR for games that support it.\n"
+            "Requires Plasma 6 and VK_hdr_layer."
+        ),
     },
     {
         "section": _("Gamescope"),
@@ -261,7 +284,11 @@ system_options = [  # pylint: disable=invalid-name
         "label": _("Game Resolution"),
         "choices": DISPLAY_MANAGER.get_resolutions,
         "condition": system.can_find_executable("gamescope"),
-        "help": _("Set the maximum resolution used by the game.\n" "\n" "<b>Custom Resolutions:</b> (width)x(height)"),
+        "help": _(
+            "Set the maximum resolution used by the game.\n"
+            "\n"
+            "<b>Custom Resolutions:</b> (width)x(height)"
+        ),
     },
     {
         "section": _("Gamescope"),
@@ -275,7 +302,8 @@ system_options = [  # pylint: disable=invalid-name
         ),
         "default": "-f",
         "condition": system.can_find_executable("gamescope"),
-        "help": _("Run gamescope in fullscreen, windowed or borderless mode\n" "Toggle fullscreen : Super + F"),
+        "help": _("Run gamescope in fullscreen, windowed or borderless mode\n"
+            "Toggle fullscreen : Super + F"),
     },
     {
         "section": _("Gamescope"),
@@ -285,7 +313,8 @@ system_options = [  # pylint: disable=invalid-name
         "type": "string",
         "condition": system.can_find_executable("gamescope"),
         "help": _(
-            "Use AMD FidelityFX™ Super Resolution 1.0 for upscaling.\n" "Upscaler sharpness from 0 (max) to 20 (min)."
+            "Use AMD FidelityFX™ Super Resolution 1.0 for upscaling.\n"
+            "Upscaler sharpness from 0 (max) to 20 (min)."
         ),
     },
     {
@@ -305,7 +334,8 @@ system_options = [  # pylint: disable=invalid-name
         "type": "string",
         "condition": system.can_find_executable("gamescope"),
         "help": _(
-            "Set additional flags for gamescope (if available).\n" "See 'gamescope --help' for a full list of options."
+            "Set additional flags for gamescope (if available).\n"
+            "See 'gamescope --help' for a full list of options."
         ),
     },
     {
@@ -322,7 +352,10 @@ system_options = [  # pylint: disable=invalid-name
         "type": "string",
         "label": _("Restrict number of cores to"),
         "default": "1",
-        "help": _("Maximum number of CPU cores to be used, if 'Restrict number of cores used' is turned on."),
+        "help": _(
+            "Maximum number of CPU cores to be used, if 'Restrict number of "
+            "cores used' is turned on."
+        ),
     },
     {
         "section": _("CPU"),
@@ -340,8 +373,14 @@ system_options = [  # pylint: disable=invalid-name
         "label": _("Reduce PulseAudio latency"),
         "default": False,
         "advanced": True,
-        "condition": system.can_find_executable("pulseaudio") or system.can_find_executable("pipewire-pulse"),
-        "help": _("Set the environment variable PULSE_LATENCY_MSEC=60 " "to improve audio quality on some games"),
+        "condition": (
+            system.can_find_executable("pulseaudio")
+            or system.can_find_executable("pipewire-pulse")
+        ),
+        "help": _(
+            "Set the environment variable PULSE_LATENCY_MSEC=60 "
+            "to improve audio quality on some games"
+        ),
     },
     {
         "section": _("Input"),
@@ -412,7 +451,10 @@ system_options = [  # pylint: disable=invalid-name
         "choices": (get_locale_choices),
         "default": "",
         "advanced": False,
-        "help": _("Can be used to force certain locale for an app. Fixes encoding issues in legacy software."),
+        "help": _(
+            "Can be used to force certain locale for an app. Fixes "
+            "encoding issues in legacy software."
+        ),
     },
     {
         "section": _("Game execution"),
@@ -420,7 +462,10 @@ system_options = [  # pylint: disable=invalid-name
         "type": "string",
         "label": _("Command prefix"),
         "advanced": True,
-        "help": _("Command line instructions to add in front of the game's " "execution command."),
+        "help": _(
+            "Command line instructions to add in front of the game's "
+            "execution command."
+        ),
     },
     {
         "section": _("Game execution"),
