@@ -7,8 +7,7 @@ from lutris.database import sql
 from lutris.util.log import logger
 from lutris.util.strings import slugify
 
-_SERVICE_CACHE = {}
-_SERVICE_CACHE_ACCESSED = False  # Keep time of last access to have a self degrading cache
+cache = {"_ACCESS_TIME": 0, "CACHE": {}}
 
 
 def get_games(searches=None, filters=None, excludes=None, sorts=None):
@@ -90,6 +89,7 @@ def get_game_for_service(service, appid):
     existing_games = get_games(filters={"service_id": appid, "service": service})
     if existing_games:
         return existing_games[0]
+    return None
 
 
 def get_all_installed_game_for_service(service):
@@ -103,17 +103,22 @@ def get_all_installed_game_for_service(service):
 
 def get_service_games(service):
     """Return the list of all installed games for a service"""
-    global _SERVICE_CACHE_ACCESSED
-    previous_cache_accessed = _SERVICE_CACHE_ACCESSED or 0
-    _SERVICE_CACHE_ACCESSED = time.time()
-    if service not in _SERVICE_CACHE or _SERVICE_CACHE_ACCESSED - previous_cache_accessed > 1:
+
+    previous_cache_accessed = cache["_ACCESS_TIME"] or 0
+    current_time = time.time()
+    cache_hit = service in cache["CACHE"] and current_time - previous_cache_accessed <= 60
+
+    if not cache_hit:
         if service == "lutris":
-            _SERVICE_CACHE[service] = [game["slug"] for game in get_games(filters={"installed": "1"})]
+            cache["CACHE"][service] = [game["slug"] for game in get_games(filters={"installed": "1"})]
         else:
-            _SERVICE_CACHE[service] = [
+            cache["CACHE"][service] = [
                 game["service_id"] for game in get_games(filters={"service": service, "installed": "1"})
             ]
-    return _SERVICE_CACHE[service]
+
+        cache["_ACCESS_TIME"] = current_time
+
+    return cache["CACHE"][service]
 
 
 def get_game_by_field(value, field="slug"):
@@ -232,3 +237,4 @@ def get_game_count(param, value):
     res = sql.db_select(settings.DB_PATH, "games", fields=("COUNT(id)",), condition=(param, value))
     if res:
         return res[0]["COUNT(id)"]
+    return None
