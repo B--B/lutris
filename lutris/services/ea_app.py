@@ -234,10 +234,7 @@ class EAAppService(OnlineService):
             logger.warning("Refreshing EA access token")
             self.fetch_access_token()
             identity_data = self._request_identity()
-        elif identity_data.get("error"):
-            raise RuntimeError("%s (Error code: %s)" % (identity_data["error"], identity_data["error_number"]))
-
-        if "error" in identity_data:
+        elif "error" in identity_data:
             raise RuntimeError(identity_data["error"])
         try:
             user_id = identity_data["pid"]["pidId"]
@@ -248,10 +245,22 @@ class EAAppService(OnlineService):
         persona_id_response = self.session.get(
             "{}/atom/users?userIds={}".format(self.api_url, user_id), headers=self.get_auth_headers()
         )
+        if persona_id_response.status_code != 200:
+            logger.error("Failed to retrieve persona ID, status code: %s", persona_id_response.status_code)
+            raise RuntimeError("Could not retrieve persona ID")
+
         content = persona_id_response.text
         ea_account_info = ElementTree.fromstring(content)
-        persona_id = ea_account_info.find("user").find("personaId").text
-        user_name = ea_account_info.find("user").find("EAID").text
+
+        user_element = ea_account_info.find("user")
+        if user_element is None:
+            raise RuntimeError("User element not found in EA account info")
+
+        persona_id = user_element.find("personaId").text if user_element.find("personaId") is not None else None
+        user_name = user_element.find("EAID").text if user_element.find("EAID") is not None else None
+        if not persona_id or not user_name:
+            raise RuntimeError("Could not retrieve necessary user information from EA account info")
+
         return str(user_id), str(persona_id), str(user_name)
 
     def load(self):
