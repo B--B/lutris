@@ -160,7 +160,7 @@ class AmazonService(OnlineService):
         """Load the user game library from the Amazon API"""
         if not self.is_connected():
             logger.error("User not connected to Amazon")
-            return
+            return None
         games = [AmazonGame.new_from_amazon_game(game) for game in self.get_library()]
         for game in games:
             game.save()
@@ -201,11 +201,11 @@ class AmazonService(OnlineService):
         return serial
 
     def generate_client_id(self, serial) -> str:
-        serialEx = f"{serial}#A2UMVHOX7UP4V7"
-        clientId = serialEx.encode("ascii")
-        clientIdHex = clientId.hex()
-        logger.info("Generated client_id: %s", clientIdHex)
-        return clientIdHex
+        serial_ex = f"{serial}#A2UMVHOX7UP4V7"
+        client_id = serial_ex.encode("ascii")
+        client_id_hex = client_id.hex()
+        logger.info("Generated client_id: %s", client_id_hex)
+        return client_id_hex
 
     def register_device(self, code):
         """Register current device and return the user data"""
