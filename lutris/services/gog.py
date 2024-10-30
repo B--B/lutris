@@ -80,7 +80,11 @@ class GOGService(OnlineService):
     icon = "gog"
     has_extras = True
     drm_free = True
-    medias = {"banner_small": GogSmallBanner, "banner": GogMediumBanner, "banner_large": GogLargeBanner}
+    medias = {
+        "banner_small": GogSmallBanner,
+        "banner": GogMediumBanner,
+        "banner_large": GogLargeBanner
+    }
     default_format = "banner"
 
     embed_url = "https://embed.gog.com"
@@ -287,7 +291,7 @@ class GOGService(OnlineService):
         if not product_id:
             raise ValueError("Missing product ID")
         logger.info("Getting game details for %s", product_id)
-        url = "{}/products/{}?expand=downloads&locale={}".format(self.api_url, product_id, self.locale)
+        url = f"{self.api_url}/products/{product_id}?expand=downloads&locale={self.locale}"
         return self.make_api_request(url)
 
     def get_download_info(self, downlink: str) -> List[dict]:
@@ -372,14 +376,24 @@ class GOGService(OnlineService):
                     all_extras[product.get("title", "").strip()] = extras
         return all_extras
 
-    def get_installers(self, downloads: Dict[str, List[dict]], runner: str, language: str = "en") -> List[dict]:
+    def get_installers(
+        self,
+        downloads: Dict[str, List[dict]],
+        runner: str,
+        language: str = "en"
+    ) -> List[dict]:
         """Return available installers for a GOG game"""
         # Filter out Mac installers
-        gog_installers = [installer for installer in downloads.get("installers", []) if installer["os"] != "mac"]
+        gog_installers = [
+            installer for installer in downloads.get("installers", [])
+            if installer["os"] != "mac"
+        ]
         filter_os = self.runner_to_os_dict.get(runner)
         # If it's a Linux game, also filter out Windows games
         if filter_os:
-            gog_installers = [installer for installer in gog_installers if installer["os"] == filter_os]
+            gog_installers = [
+                installer for installer in gog_installers if installer["os"] == filter_os
+            ]
         return [
             installer
             for installer in gog_installers
@@ -405,10 +419,17 @@ class GOGService(OnlineService):
             patch_versions[patch["name"]].append(patch)
         return patch_versions
 
-    def determine_language_installer(self, gog_installers: List[dict], default_language: str = "en") -> str:
+    def determine_language_installer(
+        self,
+        gog_installers: List[dict],
+        default_language: str = "en"
+    ) -> str:
         """Return locale language string if available in gog_installers"""
         language = i18n.get_lang()
-        gog_installers = [installer for installer in gog_installers if installer["language"] == language]
+        gog_installers = [
+            installer for installer in gog_installers
+            if installer["language"] == language
+        ]
         if not gog_installers:
             language = default_language
         return language
@@ -436,7 +457,11 @@ class GOGService(OnlineService):
                 )
         return download_links
 
-    def get_extra_files(self, installer: "LutrisInstaller", selected_extras: List[dict]) -> List[InstallerFile]:
+    def get_extra_files(
+        self,
+        installer: "LutrisInstaller",
+        selected_extras: List[dict]
+    ) -> List[InstallerFile]:
         extra_files = []
         for extra in selected_extras:
             downlinks = extra.get("downlinks")
@@ -448,7 +473,10 @@ class GOGService(OnlineService):
                 links = []
 
             if not links:
-                logger.error("No download link for bonus content '%s' could be obtained.", extra.get("name"))
+                logger.error(
+                    "No download link for bonus content '%s' could be obtained.",
+                    extra.get("name")
+                )
 
             for link in links:
                 if link["filename"].endswith(".xml"):
@@ -479,9 +507,15 @@ class GOGService(OnlineService):
             _installer = gog_installers[0]
             return self.query_download_links(_installer)
         except HTTPError as err:
-            raise UnavailableGameError(_("Couldn't load the download links for this game")) from err
+            raise UnavailableGameError(
+                _("Couldn't load the download links for this game")
+            ) from err
 
-    def get_patch_files(self, installer: "LutrisInstaller", installer_file_id: str) -> List[InstallerFile]:
+    def get_patch_files(
+        self,
+        installer: "LutrisInstaller",
+        installer_file_id: str
+    ) -> List[InstallerFile]:
         logger.debug("Getting patches for %s", installer.version)
         downloads = self.get_downloads(installer.service_appid)
         links = []
@@ -515,7 +549,7 @@ class GOGService(OnlineService):
         for _file_id in _installer_files:
             installer_file = _installer_files[_file_id]
             if "url" not in installer_file:
-                raise ValueError("Invalid installer file %s" % installer_file)
+                raise ValueError(f"Invalid installer file {installer_file}")
             filename = installer_file["filename"]
             if filename.lower().endswith((".exe", ".sh")) and not file_id_provided:
                 file_id = installer_file_id
@@ -575,16 +609,21 @@ class GOGService(OnlineService):
     def generate_installer(self, db_game: Dict[str, Any]) -> Dict[str, Any]:
         details = json.loads(db_game["details"])
         slug = details["slug"]
-        platforms = [platform.casefold() for platform, is_supported in details["worksOn"].items() if is_supported]
+        platforms = [
+            platform.casefold() for platform,
+            is_supported in details["worksOn"].items() if is_supported
+        ]
         if "linux" in platforms:
             return self._generate_installer(slug, "linux", db_game)
-        else:
-            return self._generate_installer(slug, "wine", db_game)
+        return self._generate_installer(slug, "wine", db_game)
 
     def generate_installers(self, db_game: Dict[str, Any]) -> List[dict]:
         details = json.loads(db_game["details"])
         slug = details["slug"]
-        platforms = [platform.casefold() for platform, is_supported in details["worksOn"].items() if is_supported]
+        platforms = [
+            platform.casefold() for platform,
+            is_supported in details["worksOn"].items() if is_supported
+        ]
 
         installers = []
 
@@ -601,7 +640,12 @@ class GOGService(OnlineService):
 
         return installers
 
-    def _generate_installer(self, slug: str, runner: str, db_game: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_installer(
+        self,
+        slug: str,
+        runner: str,
+        db_game: Dict[str, Any]
+    ) -> Dict[str, Any]:
         system_config = {}
         if runner == "linux":
             game_config = {"exe": AUTO_ELF_EXE}
@@ -635,7 +679,7 @@ class GOGService(OnlineService):
 
     def get_games_owned(self) -> dict:
         """Return IDs of games owned by user"""
-        url = "{}/user/data/games".format(self.embed_url)
+        url = f"{self.embed_url}/user/data/games"
         return self.make_api_request(url)
 
     def get_dlc_installers(self, db_game: dict) -> List[dict]:
@@ -650,11 +694,12 @@ class GOGService(OnlineService):
         installers = []
 
         for dlc in dlcs:
-            dlc_id = "gogdlc-%s" % dlc["slug"]
+            dlc_id = f"gogdlc-{dlc["slug"]}"
 
             # remove mac installers for now
             installfiles = [
-                installer for installer in dlc["downloads"].get("installers", []) if installer["os"] != "mac"
+                installer for installer in dlc["downloads"].get("installers", [])
+                if installer["os"] != "mac"
             ]
 
             for file in installfiles:
@@ -679,7 +724,7 @@ class GOGService(OnlineService):
                     # add runner in brackets - wrong installer can be run when this is not unique
                     "version": f"{dlc['title']} ({runner})",
                     "slug": dlc["slug"],
-                    "description": "DLC for %s" % db_game["name"],
+                    "description": f"DLC for {db_game["name"]}",
                     "game_slug": self.get_installed_slug(db_game),
                     "runner": runner,
                     "is_dlc": True,
@@ -701,11 +746,18 @@ class GOGService(OnlineService):
         owned = self.get_games_owned()
         installers = self.get_dlc_installers(db_game)
 
-        installers = [installer for installer in installers if installer["dlcid"] in owned["owned"]]
+        installers = [
+            installer for installer in installers if installer["dlcid"] in owned["owned"]
+        ]
 
         return installers
 
-    def get_dlc_installers_runner(self, db_game: dict, runner: str, only_owned: bool = True) -> List[dict]:
+    def get_dlc_installers_runner(
+        self,
+        db_game: dict,
+        runner: str,
+        only_owned: bool = True
+    ) -> List[dict]:
         """Return DLC installers for requested runner
         only_owned=True only return installers for owned DLC (default)"""
         if only_owned:
@@ -729,7 +781,7 @@ class GOGService(OnlineService):
         for version in patch_versions:
             patch = patch_versions[version]
             size = human_size(sum(part["total_size"] for part in patch))
-            patch_id = "gogpatch-%s" % slugify(patch[0]["version"])
+            patch_id = f"gogpatch-{slugify(patch[0]["version"])}"
             installer = {
                 "name": db_game["name"],
                 "description": patch[0]["name"] + " " + size,
@@ -749,7 +801,7 @@ class GOGService(OnlineService):
     def get_game_platforms(self, db_game: dict) -> List[str]:
         details = db_game.get("details")
         if details:
-            worksOn = json.loads(details).get("worksOn")
-            if worksOn is not None:
-                return [name for name, works in worksOn.items() if works]
+            works_on = json.loads(details).get("worksOn")
+            if works_on is not None:
+                return [name for name, works in works_on.items() if works]
         return []
