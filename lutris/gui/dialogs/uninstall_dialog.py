@@ -69,14 +69,18 @@ class UninstallDialog(Gtk.Dialog):
             row.connect("row-updated", self.on_row_updated)
 
     def update_deletability(self) -> None:
-        """Updates the can_delete_files property on each row; adding new rows can set this on existing rows
-        (they might no longer violate the 'can't delete shared directory' rule). This also sets flags that
-        are used by later update methods, so this must be called first."""
+        """Updates the can_delete_files property on each row; adding new rows can set this on
+        existing rows (they might no longer violate the 'can't delete shared directory' rule).
+        This also sets flags that are used by later update methods, so this must be called first.
+        """
         self.any_shared = False
         self.any_protected = False
 
         def is_shared(directory: str) -> bool:
-            dir_users = set(str(g["id"]) for g in get_games(filters={"directory": directory, "installed": 1}))
+            dir_users = set(
+                str(g["id"]) for g
+                in get_games(filters={"directory": directory, "installed": 1})
+            )
             for g in self.games:
                 dir_users.discard(g.id)
             return bool(dir_users)
@@ -142,11 +146,15 @@ class UninstallDialog(Gtk.Dialog):
         messages = []
 
         if to_uninstall:
-            messages.append(_("After you uninstall these games, you won't be able play them in Lutris."))
             messages.append(
                 _(
-                    "Uninstalled games that you remove from the library will no longer appear in the "
-                    "'Games' view, but those that remain will retain their playtime data."
+                    "After you uninstall these games, you won't be able play them in Lutris."
+                )
+            )
+            messages.append(
+                _(
+                    "Uninstalled games that you remove from the library will no longer appear in "
+                    "the 'Games' view, but those that remain will retain their playtime data."
                 )
             )
         else:
@@ -166,7 +174,11 @@ class UninstallDialog(Gtk.Dialog):
             )
 
         if self.any_protected:
-            messages.append(_("Some of the game directories cannot be removed because they are protected."))
+            messages.append(
+                _(
+                    "Some of the game directories cannot be removed because they are protected."
+                )
+            )
 
         if messages:
             self.message_label.set_markup("\n\n".join(messages))
@@ -200,7 +212,9 @@ class UninstallDialog(Gtk.Dialog):
 
             checkbox.set_active(set_count > 0)
             checkbox.set_inconsistent(set_count > 0 and unset_count > 0)
-            checkbox.set_visible((set_count + unset_count) > 1 and (set_count > 0 or unset_count > 0))
+            checkbox.set_visible(
+                (set_count + unset_count) > 1 and (set_count > 0 or unset_count > 0)
+            )
 
         if not self._setting_all_checkboxes:
             self._setting_all_checkboxes = True
@@ -294,7 +308,7 @@ class UninstallDialog(Gtk.Dialog):
             library_syncer = LibrarySyncer()
             for row in rows:
                 if row.remove_from_library:
-                    games_removed_from_library.append(get_game_by_field(row.game._id, "id"))
+                    games_removed_from_library.append(get_game_by_field(row.game.get_id(), "id"))
             if games_removed_from_library:
                 library_syncer.sync_local_library()
 
@@ -362,7 +376,10 @@ class GameRemovalRow(Gtk.ListBoxRow):
         label = Gtk.Label(game.name, selectable=True)
         hbox.pack_start(label, False, False, 0)
 
-        self.remove_from_library_checkbox = Gtk.CheckButton(_("Remove from Library"), halign=Gtk.Align.START)
+        self.remove_from_library_checkbox = Gtk.CheckButton(
+            _("Remove from Library"),
+            halign=Gtk.Align.START
+        )
         self.remove_from_library_checkbox.set_active(False)
         self.remove_from_library_checkbox.connect("toggled", self.on_checkbox_toggled)
         hbox.pack_end(self.remove_from_library_checkbox, False, False, 0)
@@ -383,7 +400,11 @@ class GameRemovalRow(Gtk.ListBoxRow):
                 margin_right=6,
                 height_request=16,
             )
-            self.directory_label = Gtk.Label(halign=Gtk.Align.START, selectable=True, valign=Gtk.Align.START)
+            self.directory_label = Gtk.Label(
+                halign=Gtk.Align.START,
+                selectable=True,
+                valign=Gtk.Align.START
+            )
             self.directory_label.set_markup(self._get_directory_markup())
             dir_box.pack_start(self.directory_label, False, False, 0)
 
