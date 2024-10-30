@@ -1090,6 +1090,10 @@ class Game:
 
         return new_location
 
+    def get_id(self):
+        """Returns the game ID."""
+        return self._id
+
 
 def export_game(slug, dest_dir):
     """Export a full game folder along with some lutris metadata"""
