@@ -282,7 +282,7 @@ class UninstallDialog(Gtk.Dialog):
             library_syncer = LibrarySyncer()
             for row in rows:
                 if row.remove_from_library:
-                    games_removed_from_library.append(get_game_by_field(row.game._id, "id"))
+                    games_removed_from_library.append(get_game_by_field(row.game.get_id(), "id"))
             if games_removed_from_library:
                 library_syncer.sync_local_library()
 
