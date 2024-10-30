@@ -31,9 +31,9 @@ from lutris.util.system import path_exists
 
 class GameActions:
     """These classes provide a set of action to apply to a game or list of games, and can be used
-    to populate menus. The base class handles the no-games case, for which there are no actions. But
-    it also includes the code for actions that are shared between the subclasses. It also has methods for
-    actions that are invokes externally by the GameBar."""
+    to populate menus. The base class handles the no-games case, for which there are no actions.
+    But it also includes the code for actions that are shared between the subclasses. It also has
+    methods for actions that are invokes externally by the GameBar."""
 
     def __init__(self, window: Gtk.Window, application=None):
         self.application = application or Gio.Application.get_default()
@@ -105,7 +105,7 @@ class GameActions:
         for game in self.get_games():
             if not game.slug:
                 game_id = game.id if game.is_db_stored else game.name
-                raise RuntimeError("No game to install: %s" % game_id)
+                raise RuntimeError(f"No game to install: {game_id}")
             game.install(launch_ui_delegate=self.window)
 
     def on_add_favorite_game(self, _widget):
@@ -132,7 +132,8 @@ class GameActions:
         """Show the user a dialog to import an existing install to a DRM free service
 
         Params:
-            games ([Game]): List of Game instances without a database ID, populated with fields the service can provides
+            games ([Game]): List of Game instances without a database ID, populated
+            with fields the service can provides
         """
         for game in self.get_games():
             AddGameDialog(self.window, game=game, runner=game.runner_name)
@@ -140,7 +141,7 @@ class GameActions:
     def on_view_game(self, _widget):
         """Callback to open a game on lutris.net"""
         for game in self.get_games():
-            open_uri("https://lutris.net/games/%s" % game.slug.replace("_", "-"))
+            open_uri(f"https://lutris.net/games/{game.slug.replace('_', '-')}")
 
     @property
     def is_game_removable(self):
@@ -162,7 +163,11 @@ class GameActions:
         games = self.get_games()
         if len(games) == 1:
             # Individual games get individual separate windows
-            self.application.show_window(EditGameCategoriesDialog, game=games[0], parent=self.window)
+            self.application.show_window(
+                EditGameCategoriesDialog,
+                game=games[0],
+                parent=self.window
+            )
         else:
 
             def add_games(window):
@@ -170,7 +175,11 @@ class GameActions:
 
             # Multi-select means a common categories window for all of them; we can wind
             # up adding games to it if it's already open
-            self.application.show_window(EditGameCategoriesDialog, update_function=add_games, parent=self.window)
+            self.application.show_window(
+                EditGameCategoriesDialog,
+                update_function=add_games,
+                parent=self.window
+            )
 
 
 class MultiGameActions(GameActions):
@@ -245,7 +254,11 @@ class SingleGameActions(GameActions):
             ("desktop-shortcut", _("Create desktop shortcut"), self.on_create_desktop_shortcut),
             ("rm-desktop-shortcut", _("Delete desktop shortcut"), self.on_remove_desktop_shortcut),
             ("menu-shortcut", _("Create application menu shortcut"), self.on_create_menu_shortcut),
-            ("rm-menu-shortcut", _("Delete application menu shortcut"), self.on_remove_menu_shortcut),
+            (
+                "rm-menu-shortcut",
+                _("Delete application menu shortcut"),
+                self.on_remove_menu_shortcut
+            ),
             ("steam-shortcut", _("Create steam shortcut"), self.on_create_steam_shortcut),
             ("rm-steam-shortcut", _("Delete steam shortcut"), self.on_remove_steam_shortcut),
             ("view", _("View on Lutris.net"), self.on_view_game),
@@ -281,14 +294,25 @@ class SingleGameActions(GameActions):
             "deletefavorite": game.is_favorite,
             "install_more": not game.service and game.is_installed,
             "execute-script": bool(
-                game.is_installed and game.has_runner and game.runner.system_config.get("manual_command")
+                game.is_installed and game.has_runner
+                and game.runner.system_config.get("manual_command")
             ),
-            "desktop-shortcut": (game.is_installed and not xdgshortcuts.desktop_launcher_exists(game.slug, game.id)),
-            "menu-shortcut": (game.is_installed and not xdgshortcuts.menu_launcher_exists(game.slug, game.id)),
+            "desktop-shortcut": (
+                game.is_installed and not xdgshortcuts.desktop_launcher_exists(game.slug, game.id)
+            ),
+            "menu-shortcut": (
+                game.is_installed and not xdgshortcuts.menu_launcher_exists(game.slug, game.id)
+            ),
             "steam-shortcut": (game.is_installed and not has_steam_shortcut and not is_steam_game),
-            "rm-desktop-shortcut": bool(game.is_installed and xdgshortcuts.desktop_launcher_exists(game.slug, game.id)),
-            "rm-menu-shortcut": bool(game.is_installed and xdgshortcuts.menu_launcher_exists(game.slug, game.id)),
-            "rm-steam-shortcut": bool(game.is_installed and has_steam_shortcut and not is_steam_game),
+            "rm-desktop-shortcut": bool(
+                game.is_installed and xdgshortcuts.desktop_launcher_exists(game.slug, game.id)
+            ),
+            "rm-menu-shortcut": bool(
+                game.is_installed and xdgshortcuts.menu_launcher_exists(game.slug, game.id)
+            ),
+            "rm-steam-shortcut": bool(
+                game.is_installed and has_steam_shortcut and not is_steam_game
+            ),
             "remove": self.is_game_removable,
             "view": True,
             "hide": game.is_installed and not game.is_hidden,
@@ -332,7 +356,7 @@ class SingleGameActions(GameActions):
         if not path:
             dialogs.NoticeDialog(_("This game has no installation directory"))
         elif path_exists(path):
-            open_uri("file://%s" % path)
+            open_uri(f"file://{path}")
         else:
             dialogs.NoticeDialog(_("Can't open %s \nThe folder doesn't exist.") % path)
 
@@ -347,7 +371,13 @@ class SingleGameActions(GameActions):
         game = self.game
         launch_config_name = self._select_game_launch_config_name(game)
         if launch_config_name is not None:
-            xdgshortcuts.create_launcher(game.slug, game.id, game.name, launch_config_name, menu=True)
+            xdgshortcuts.create_launcher(
+                game.slug,
+                game.id,
+                game.name,
+                launch_config_name,
+                menu=True
+            )
 
     def on_create_steam_shortcut(self, *_args):
         """Add the selected game to steam as a nonsteam-game."""
@@ -361,7 +391,13 @@ class SingleGameActions(GameActions):
         game = self.game
         launch_config_name = self._select_game_launch_config_name(game)
         if launch_config_name is not None:
-            xdgshortcuts.create_launcher(game.slug, game.id, game.name, launch_config_name, desktop=True)
+            xdgshortcuts.create_launcher(
+                game.slug,
+                game.id,
+                game.name,
+                launch_config_name,
+                desktop=True
+            )
 
     def on_remove_menu_shortcut(self, *_args):
         """Remove an XDG menu shortcut"""
@@ -414,7 +450,8 @@ class SingleGameActions(GameActions):
         db_game["playtime"] = 0.0
         db_game["configpath"] = new_config_id
         db_game.pop("id")
-        # Disconnect duplicate from service- there should be at most 1 database game for a service game.
+        # Disconnect duplicate from service- there should be at most
+        # 1 database game for a service game.
         db_game.pop("service", None)
         db_game.pop("service_id", None)
 
@@ -440,7 +477,12 @@ class SingleGameActions(GameActions):
         if not configs:
             return ""  # use primary configuration
 
-        dlg = dialogs.LaunchConfigSelectDialog(game, configs, title=_("Select shortcut target"), parent=self.window)
+        dlg = dialogs.LaunchConfigSelectDialog(
+            game,
+            configs,
+            title=_("Select shortcut target"),
+            parent=self.window
+        )
         if not dlg.confirmed:
             return None  # no error here- the user cancelled out
 
