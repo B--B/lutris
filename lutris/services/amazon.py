@@ -26,7 +26,12 @@ from lutris.services.base import SERVICE_LOGIN, OnlineService
 from lutris.services.service_game import ServiceGame
 from lutris.services.service_media import ServiceMedia
 from lutris.util import system
-from lutris.util.amazon.sds_proto2 import CompressionAlgorithm, HashAlgorithm, Manifest, ManifestHeader
+from lutris.util.amazon.sds_proto2 import (
+    CompressionAlgorithm,
+    HashAlgorithm,
+    Manifest,
+    ManifestHeader
+)
 from lutris.util.http import HTTPError, Request
 from lutris.util.log import logger
 from lutris.util.strings import slugify
@@ -160,7 +165,7 @@ class AmazonService(OnlineService):
         """Load the user game library from the Amazon API"""
         if not self.is_connected():
             logger.error("User not connected to Amazon")
-            return
+            return None
         games = [AmazonGame.new_from_amazon_game(game) for game in self.get_library()]
         for game in games:
             game.save()
@@ -201,11 +206,11 @@ class AmazonService(OnlineService):
         return serial
 
     def generate_client_id(self, serial) -> str:
-        serialEx = f"{serial}#A2UMVHOX7UP4V7"
-        clientId = serialEx.encode("ascii")
-        clientIdHex = clientId.hex()
-        logger.info("Generated client_id: %s", clientIdHex)
-        return clientIdHex
+        serial_ex = f"{serial}#A2UMVHOX7UP4V7"
+        client_id = serial_ex.encode("ascii")
+        client_id_hex = client_id.hex()
+        logger.info("Generated client_id: %s", client_id_hex)
+        return client_id_hex
 
     def register_device(self, code):
         """Register current device and return the user data"""
@@ -355,7 +360,8 @@ class AmazonService(OnlineService):
             request_data = self.get_sync_request_data(serial, next_token)
 
             json_data = self.request_entitlements(
-                "com.amazon.animusdistributionservice.entitlement.AnimusEntitlementsService.GetEntitlements",
+                "com.amazon.animusdistributionservice.entitlement"
+                ".AnimusEntitlementsService.GetEntitlements",
                 access_token,
                 request_data,
             )
@@ -455,7 +461,8 @@ class AmazonService(OnlineService):
 
         try:
             response = self.request_distribution(
-                "com.amazon.animusdistributionservice.external.AnimusDistributionService.GetGameDownload",
+                "com.amazon.animusdistributionservice.external"
+                ".AnimusDistributionService.GetGameDownload",
                 access_token,
                 request_data,
             )
@@ -516,14 +523,18 @@ class AmazonService(OnlineService):
 
         try:
             return self.request_sds(
-                "com.amazonaws.gearbox." "softwaredistribution.service.model." "SoftwareDistributionService.GetPatches",
+                "com.amazonaws.gearbox."
+                "softwaredistribution.service.model."
+                "SoftwareDistributionService.GetPatches",
                 access_token,
                 request_data,
             )
         except HTTPError as ex:
             # Do not raise exception here, should be managed from the caller
             logger.exception("There was an error getting '%s' patches: %s", game_id, ex)
-            raise UnavailableGameError(_("Unable to get the patches of game '%s'") % game_id) from ex
+            raise UnavailableGameError(
+                _("Unable to get the patches of game '%s'") % game_id
+            ) from ex
 
     def get_game_patches(self, game_id, version, file_list):
         """Get game files"""
@@ -555,12 +566,20 @@ class AmazonService(OnlineService):
                 file_hash = file.hash.value.hex()
 
                 hashes.append(file_hash)
-                files.append({"path": file.path.decode().replace("\\", "/"), "size": file.size, "url": None})
+                files.append(
+                    {
+                        "path": file.path.decode().replace("\\", "/"),
+                        "size": file.size, "url": None
+                    }
+                )
 
                 hashpairs.append(
                     {
                         "sourceHash": None,
-                        "targetHash": {"value": file_hash, "algorithm": HashAlgorithm.get_name(file.hash.algorithm)},
+                        "targetHash": {
+                            "value": file_hash,
+                            "algorithm": HashAlgorithm.get_name(file.hash.algorithm)
+                        },
                     }
                 )
             for __, directory in enumerate(package.dirs):
@@ -608,7 +627,12 @@ class AmazonService(OnlineService):
         except Exception as ex:
             # Maybe it can be parsed as plain JSON. May as well try it.
             try:
-                logger.exception("Unparseable yaml response from %s: %s\n%s", fuel_url, ex, res_yaml_text)
+                logger.exception(
+                    "Unparseable yaml response from %s: %s\n%s",
+                    fuel_url,
+                    ex,
+                    res_yaml_text
+                )
                 res_json = json.loads(res_yaml_text)
             except Exception:
                 raise UnavailableGameError(_("Invalid response from Amazon APIs")) from ex
@@ -652,7 +676,9 @@ class AmazonService(OnlineService):
             file_name = os.path.basename(file["path"])
             files.append(
                 InstallerFile(
-                    installer.game_slug, file_hash, {"url": file["url"], "filename": file_name, "size": file["size"]}
+                    installer.game_slug,
+                    file_hash,
+                    {"url": file["url"], "filename": file_name, "size": file["size"]}
                 )
             )
         # return should be a list of files, so we return a list containing a InstallerFileCollection
