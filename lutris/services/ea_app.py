@@ -37,13 +37,17 @@ class EAAppGames:
     def iter_installed_games(self):
         if not os.path.exists(self.ea_games_path):
             return
-        for game_folder in os.listdir(self.ea_games_path):
-            yield game_folder
+        # Use yield from to return items directly
+        yield from os.listdir(self.ea_games_path)
 
     def get_installed_games_content_ids(self):
         installed_game_ids = []
         for game_folder in self.iter_installed_games():
-            installer_data_path = os.path.join(self.ea_games_path, game_folder, "__Installer/installerdata.xml")
+            installer_data_path = os.path.join(
+                self.ea_games_path,
+                game_folder,
+                "__Installer/installerdata.xml"
+            )
             if not os.path.exists(installer_data_path):
                 logger.warning("No installerdata.xml for %s", game_folder)
                 continue
@@ -163,11 +167,11 @@ class EAAppService(OnlineService):
     login_url = "https://www.ea.com/login"
     redirect_uri = "https://www.ea.com/"
     origin_login_url = (
-        "https://accounts.ea.com/connect/auth"
-        "?response_type=code&client_id=ORIGIN_SPA_ID&display=originXWeb/login"
-        "&locale=en_US&release_type=prod"
-        "&redirect_uri=%s"
-    ) % origin_redirect_uri
+        f"https://accounts.ea.com/connect/auth"
+        f"?response_type=code&client_id=ORIGIN_SPA_ID&display=originXWeb/login"
+        f"&locale=en_US&release_type=prod"
+        f"&redirect_uri={origin_redirect_uri}"
+    )
     login_user_agent = settings.DEFAULT_USER_AGENT + " QtWebEngine/5.8.0"
 
     def __init__(self):
@@ -179,7 +183,7 @@ class EAAppService(OnlineService):
 
     @property
     def api_url(self):
-        return "https://api%s.origin.com" % random.randint(1, 4)
+        return f"https://api{random.randint(1, 4)}.origin.com"
 
     def is_connected(self):
         return bool(self.access_token)
@@ -235,7 +239,9 @@ class EAAppService(OnlineService):
             self.fetch_access_token()
             identity_data = self._request_identity()
         elif identity_data.get("error"):
-            raise RuntimeError("%s (Error code: %s)" % (identity_data["error"], identity_data["error_number"]))
+            raise RuntimeError(
+                f"{identity_data["error"]} (Error code: {identity_data["error_number"]})"
+            )
 
         if "error" in identity_data:
             raise RuntimeError(identity_data["error"])
@@ -246,7 +252,7 @@ class EAAppService(OnlineService):
             raise
 
         persona_id_response = self.session.get(
-            "{}/atom/users?userIds={}".format(self.api_url, user_id), headers=self.get_auth_headers()
+            f"{self.api_url}/atom/users?userIds={user_id}", headers=self.get_auth_headers()
         )
         content = persona_id_response.text
         ea_account_info = ElementTree.fromstring(content)
@@ -278,13 +284,13 @@ class EAAppService(OnlineService):
 
     def get_offer(self, offer_id):
         """Load offer details from EA"""
-        url = "{}/ecommerce2/public/supercat/{}/{}".format(self.api_url, offer_id, "en_US")
+        url = f"{self.api_url}/ecommerce2/public/supercat/{offer_id}/{'en_US'}"
         response = self.session.get(url, headers=self.get_auth_headers())
         return response.json()
 
     def get_entitlements(self, user_id):
         """Request the user's entitlements"""
-        url = "%s/ecommerce2/consolidatedentitlements/%s?machine_hash=1" % (self.api_url, user_id)
+        url = f"{self.api_url}/ecommerce2/consolidatedentitlements/{user_id}?machine_hash=1"
         headers = self.get_auth_headers()
         headers["Accept"] = "application/vnd.origin.v3+json; x-cache/force-write"
         response = self.session.get(url, headers=headers)
@@ -296,7 +302,7 @@ class EAAppService(OnlineService):
         if not self.access_token:
             raise RuntimeError("User not authenticated to EA")
         return {
-            "Authorization": "Bearer %s" % self.access_token,
+            "Authorization": f"Bearer {self.access_token}",
             "AuthToken": self.access_token,
             "X-AuthToken": self.access_token,
         }
@@ -324,11 +330,11 @@ class EAAppService(OnlineService):
         service_game = ServiceGameCollection.get_game("ea_app", offer_id)
         if not service_game:
             logger.error("Aborting install, %s is not present in the game library.", offer_id)
-            return
+            return None
         lutris_game_id = slugify(service_game["name"]) + "-" + self.id
         existing_game = get_game_by_field(lutris_game_id, "installer_slug")
         if existing_game:
-            return
+            return None
         game_config = LutrisConfig(game_config_id=ea_game["configpath"]).game_level
         game_config["game"]["args"] = get_launch_arguments(",".join(content_ids))
         configpath = write_game_config(lutris_game_id, game_config)
@@ -370,7 +376,11 @@ class EAAppService(OnlineService):
                             "executable": ea_exe,
                             "args": get_launch_arguments(db_game["appid"]),
                             "prefix": ea_game.config.game_config["prefix"],
-                            "description": ("EA App will now open and prompt you to install %s." % db_game["name"]),
+                            "description": (
+                                _(
+                                    "EA App will now open and prompt you to install %s."
+                                ) % db_game["name"]
+                            ),
                         }
                     }
                 ],
@@ -388,7 +398,9 @@ class EAAppService(OnlineService):
             application.show_lutris_installer_window(game_slug=self.client_installer)
         else:
             application.show_installer_window(
-                [self.generate_installer(db_game, ea_app_game)], service=self, appid=db_game["appid"]
+                [self.generate_installer(db_game, ea_app_game)],
+                service=self,
+                appid=db_game["appid"]
             )
 
 
