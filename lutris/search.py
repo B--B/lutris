@@ -201,7 +201,8 @@ class BaseSearch:
 
 
 class GameSearch(BaseSearch):
-    """A search for games, which applies to the games database dictionaries, not the Game objects."""
+    """A search for games, which applies to the games database
+    dictionaries, not the Game objects."""
 
     tags = set(
         [
@@ -298,46 +299,51 @@ class GameSearch(BaseSearch):
         return self.get_duration_predicate(get_game_lastplayed_duration_ago, tokens, tag="lastplayed")
 
     def get_duration_predicate(self, value_function: Callable, tokens: TokenReader, tag: str) -> SearchPredicate:
+        duration_info = {"parts": None, "total_hours": None}
+
         def match_greater_playtime(db_game):
             game_playtime = value_function(db_game)
-            return game_playtime and game_playtime > duration
+            return game_playtime and game_playtime > duration_info["total_hours"]
 
         def match_lesser_playtime(db_game):
             game_playtime = value_function(db_game)
-            return game_playtime and game_playtime < duration
+            return game_playtime and game_playtime < duration_info["total_hours"]
 
         def match_playtime(db_game):
             game_playtime = value_function(db_game)
-            return game_playtime and duration_parts.matches(game_playtime)
+            return game_playtime and duration_info["parts"].matches(game_playtime)
+
+        def match_greater_equal_playtime(db_game):
+            return match_greater_playtime(db_game) or match_playtime(db_game)
+
+        def match_lesser_equal_playtime(db_game):
+            return match_lesser_playtime(db_game) or match_playtime(db_game)
 
         operator = tokens.peek_token()
         if operator == ">":
             matcher = match_greater_playtime
-            tokens.get_token()
         elif operator == "<":
             matcher = match_lesser_playtime
-            tokens.get_token()
         elif operator == ">=":
-            matcher = lambda *a: match_greater_playtime(*a) or match_playtime(*a)  # noqa: E731
-            tokens.get_token()
+            matcher = match_greater_equal_playtime
         elif operator == "<=":
-            matcher = lambda *a: match_lesser_playtime(*a) or match_playtime(*a)  # noqa: E731
-            tokens.get_token()
+            matcher = match_lesser_equal_playtime
         else:
             matcher = match_playtime
 
-        # We'll hope none of our tags are ever part of a legit duration
+        tokens.get_token()
+
         duration_text = tokens.get_cleaned_token_sequence(stop_function=self.is_stop_token)
         if not duration_text:
             raise InvalidSearchTermError("A blank is not a valid duration.")
 
         try:
-            duration_parts = parse_playtime_parts(duration_text)
-            duration = duration_parts.get_total_hours()
+            duration_info["parts"] = parse_playtime_parts(duration_text)
+            duration_info["total_hours"] = duration_info["parts"].get_total_hours()
         except ValueError as ex:
             raise InvalidSearchTermError(f"'{duration_text}' is not a valid playtime.") from ex
 
-        text = f"{tag}:{operator}{get_formatted_playtime(duration)}"
+        text = f"{tag}:{operator}{get_formatted_playtime(duration_info['total_hours'])}"
         return FunctionPredicate(matcher, text)
 
     def get_directory_predicate(self, directory: str) -> SearchPredicate:
