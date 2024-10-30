@@ -27,7 +27,12 @@ from lutris.runner_interpreter import export_bash_script, get_launch_parameters
 from lutris.runners import import_runner, is_valid_runner_name
 from lutris.runners.runner import Runner
 from lutris.util import busy, discord, extract, jobs, linux, strings, system, xdgshortcuts
-from lutris.util.display import DISPLAY_MANAGER, SCREEN_SAVER_INHIBITOR, disable_compositing, enable_compositing
+from lutris.util.display import (
+    DISPLAY_MANAGER,
+    SCREEN_SAVER_INHIBITOR,
+    disable_compositing,
+    enable_compositing
+)
 from lutris.util.graphics.xephyr import get_xephyr_command
 from lutris.util.graphics.xrandr import turn_off_except
 from lutris.util.linux import LINUX_SYSTEM
@@ -93,7 +98,12 @@ class Game:
         try:
             self.playtime = float(game_data.get("playtime") or 0.0)
         except ValueError as ex:
-            logger.exception("Unable to parse playtime '%s' for game %s: %s", game_data.get("playtime"), self.slug, ex)
+            logger.exception(
+                "Unable to parse playtime '%s' for game %s: %s",
+                game_data.get("playtime"),
+                self.slug,
+                ex
+            )
             self.playtime = 0.0
 
         self.discord_id = game_data.get("discord_id")  # Discord App ID for RPC
@@ -141,7 +151,7 @@ class Game:
     def __str__(self):
         value = self.name or "Game (no name)"
         if self.runner_name:
-            value += " (%s)" % self.runner_name
+            value += f" ({self.runner_name})"
         return value
 
     @property
@@ -280,7 +290,10 @@ class Game:
         if not self.is_installed or not self.game_config_id:
             return None
         if not self._config:
-            self._config = LutrisConfig(runner_slug=self.runner_name, game_config_id=self.game_config_id)
+            self._config = LutrisConfig(
+                runner_slug=self.runner_name,
+                game_config_id=self.game_config_id
+            )
         return self._config
 
     @config.setter
@@ -340,7 +353,7 @@ class Game:
     def install(self, launch_ui_delegate):
         """Request installation of a game"""
         if not self.slug:
-            raise ValueError("Invalid game passed: %s" % self)
+            raise ValueError(f"Invalid game passed: {self}")
 
         if not self.service or self.service == "lutris":
             application = Gio.Application.get_default()
@@ -350,7 +363,11 @@ class Game:
         service = launch_ui_delegate.get_service(self.service)
         db_game = service.get_service_db_game(self)
         if not db_game:
-            logger.error("Can't find %s for %s, trying to fall back to Lutris installers", self.name, service.name)
+            logger.error(
+                "Can't find %s for %s, trying to fall back to Lutris installers",
+                self.name,
+                service.name
+            )
             application = Gio.Application.get_default()
             application.show_lutris_installer_window(game_slug=self.slug)
             return
@@ -401,9 +418,19 @@ class Game:
                 raise RuntimeError(_("No DLC found"))
 
             application = Gio.Application.get_default()
-            application.show_installer_window(installers, service, self.appid, installation_kind=InstallationKind.DLC)
+            application.show_installer_window(
+                installers,
+                service,
+                self.appid,
+                installation_kind=InstallationKind.DLC
+            )
 
-        busy.BusyAsyncCall(service.get_dlc_installers_runner, on_installers_ready, db_game, db_game["runner"])
+        busy.BusyAsyncCall(
+            service.get_dlc_installers_runner,
+            on_installers_ready,
+            db_game,
+            db_game["runner"]
+        )
         return True
 
     def uninstall(self, delete_files: bool = False) -> None:
@@ -412,7 +439,12 @@ class Game:
         Params:
             delete_files (bool): Delete the game files
         """
-        sql.db_update(settings.DB_PATH, "games", {"installed": 0, "runner": ""}, {"id": self.id})
+        sql.db_update(
+            settings.DB_PATH,
+            "games",
+            {"installed": 0, "runner": ""},
+            {"id": self.id}
+        )
         if self.config:
             self.config.remove()
         xdgshortcuts.remove_launcher(self.slug, self.id, desktop=True, menu=True)
@@ -443,7 +475,10 @@ class Game:
             return
         self.platform = self.runner.get_platform()
         if not self.platform:
-            logger.warning("The %s runner didn't provide a platform for %s", self.runner.human_name, self)
+            logger.warning(
+                "The %s runner didn't provide a platform for %s",
+                self.runner.human_name, self
+            )
 
     def save(self, no_signal=False):
         """
@@ -491,7 +526,12 @@ class Game:
     def save_lastplayed(self):
         """Save only the lastplayed field- do not restore any other values the user may have changed
         in another window."""
-        games_db.update_existing(id=self.id, slug=self.slug, lastplayed=self.lastplayed, playtime=self.playtime)
+        games_db.update_existing(
+            id=self.id,
+            slug=self.slug,
+            lastplayed=self.lastplayed,
+            playtime=self.playtime
+        )
         GAME_UPDATED.fire(self)
 
     def check_launchable(self):
@@ -532,7 +572,9 @@ class Game:
     def start_xephyr(self, display=":2"):
         """Start a monitored Xephyr instance"""
         if not system.can_find_executable("Xephyr"):
-            raise GameConfigError(_("Unable to find Xephyr, install it or disable the Xephyr option"))
+            raise GameConfigError(
+                _("Unable to find Xephyr, install it or disable the Xephyr option")
+            )
         xephyr_command = get_xephyr_command(display, self.runner.system_config)
         xephyr_thread = MonitoredCommand(xephyr_command)
         xephyr_thread.start()
@@ -579,14 +621,17 @@ class Game:
             self.prelaunch_executor.start()
 
     def get_terminal(self):
-        """Return the terminal used to run the game into or None if the game is not run from a terminal.
-        Remember that only games using text mode should use the terminal.
+        """Return the terminal used to run the game into or None if the game is not run from
+        a terminal. Remember that only games using text mode should use the terminal.
         """
         if self.runner.system_config.get("terminal"):
             terminal = self.runner.system_config.get("terminal_app", linux.get_default_terminal())
             if terminal and not system.can_find_executable(terminal):
-                raise GameConfigError(_("The selected terminal application could not be launched:\n%s") % terminal)
+                raise GameConfigError(
+                    _("The selected terminal application could not be launched:\n%s") % terminal
+                )
             return terminal
+        return None
 
     def get_killswitch(self):
         """Return the path to a file that is monitored during game execution.
@@ -596,6 +641,7 @@ class Game:
         # Prevent setting a killswitch to a file that doesn't exists
         if killswitch and system.path_exists(self.killswitch):
             return killswitch
+        return None
 
     def get_gameplay_info(self, launch_ui_delegate):
         """Return the information provided by a runner's play method.
@@ -685,8 +731,12 @@ class Game:
             "args": command,
             "env": env,
             "terminal": self.get_terminal(),
-            "include_processes": shlex.split(self.runner.system_config.get("include_processes", "")),
-            "exclude_processes": shlex.split(self.runner.system_config.get("exclude_processes", "")),
+            "include_processes": shlex.split(
+                self.runner.system_config.get("include_processes", "")
+            ),
+            "exclude_processes": shlex.split(
+                self.runner.system_config.get("exclude_processes", "")
+            ),
         }
 
         if "working_dir" in gameplay_info:
@@ -706,7 +756,9 @@ class Game:
             self.screen_saver_inhibitor_cookie = SCREEN_SAVER_INHIBITOR.inhibit(self.name)
 
         if self.runner.system_config.get("display") != "off":
-            self.resolution_changed = self.restrict_to_display(self.runner.system_config.get("display"))
+            self.resolution_changed = self.restrict_to_display(
+                self.runner.system_config.get("display")
+            )
 
         resolution = self.runner.system_config.get("resolution")
         if resolution != "off":
@@ -876,7 +928,10 @@ class Game:
             if game_folder in cmdline or "pressure-vessel" in cmdline:
                 folder_pids.add(pid)
 
-        uuid_pids = set(pid for pid in new_pids if Process(pid).environ.get("LUTRIS_GAME_UUID") == self.game_uuid)
+        uuid_pids = set(
+            pid for pid in new_pids
+            if Process(pid).environ.get("LUTRIS_GAME_UUID") == self.game_uuid
+        )
 
         return folder_pids & uuid_pids
 
@@ -1016,13 +1071,20 @@ class Game:
             error = "error while loading shared lib"
             error_lines = strings.lookup_strings_in_text(error, self.game_thread.stdout)
             if error_lines:
-                raise RuntimeError(_("<b>Error: Missing shared library.</b>\n\n%s") % error_lines[0])
+                raise RuntimeError(
+                    _("<b>Error: Missing shared library.</b>\n\n%s") % error_lines[0]
+                )
 
         if self.game_thread.return_code == 1:
             # Error Wine version conflict
             error = "maybe the wrong wineserver"
             if strings.lookup_strings_in_text(error, self.game_thread.stdout):
-                raise RuntimeError(_("<b>Error: A different Wine version is already using the same Wine prefix.</b>"))
+                raise RuntimeError(
+                    _(
+                        "<b>Error: A different Wine version is already using the same Wine "
+                        "prefix.</b>"
+                    )
+                )
 
     def write_script(self, script_path, launch_ui_delegate):
         """Output the launch argument in a bash script"""
@@ -1040,7 +1102,9 @@ class Game:
 
         if old_location and system.path_contains(old_location, new_location):
             raise InvalidGameMoveError(
-                _("Lutris can't move '%s' to a location inside of itself, '%s'.") % (old_location, new_location)
+                _(
+                    "Lutris can't move '%s' to a location inside of itself, '%s'."
+                ) % (old_location, new_location)
             )
 
         self.directory = target_directory
@@ -1112,17 +1176,17 @@ def export_game(slug, dest_dir):
         logger.error("Game %s not found", slug)
         return
     if db_game["runner"] not in exportable_runners:
-        raise RuntimeError("Game %s can't be exported." % db_game["name"])
+        raise RuntimeError(f"Game {db_game["name"]} can't be exported.")
     if not db_game["directory"]:
         raise RuntimeError("No game directory set. Could we guess it?")
 
     game = Game(db_game["id"])
     db_game["config"] = game.config.game_level
     game_path = db_game["directory"]
-    config_path = os.path.join(db_game["directory"], "%s.lutris" % slug)
+    config_path = os.path.join(db_game["directory"], f"{slug}.lutris")
     with open(config_path, "w", encoding="utf-8") as config_file:
         json.dump(db_game, config_file, indent=2)
-    archive_path = os.path.join(dest_dir, "%s.tar.xz" % slug)
+    archive_path = os.path.join(dest_dir, f"{slug}.tar.xz")
     command = ["tar", "cJf", archive_path, os.path.basename(game_path)]
     system.execute(command, cwd=os.path.dirname(game_path))
     logger.info("%s exported to %s", slug, archive_path)
@@ -1131,7 +1195,7 @@ def export_game(slug, dest_dir):
 def import_game(file_path, dest_dir):
     """Import a game in Lutris"""
     if not os.path.exists(file_path):
-        raise RuntimeError("No file %s" % file_path)
+        raise RuntimeError(f"No file {file_path}")
     logger.info("Importing %s to %s", file_path, dest_dir)
     if not os.path.isdir(dest_dir):
         os.makedirs(dest_dir)
@@ -1156,7 +1220,7 @@ def import_game(file_path, dest_dir):
         config_file.write(config_data)
     with open(os.path.join(game_dir, game_config), encoding="utf-8") as config_file:
         lutris_config = json.load(config_file)
-    config_filename = os.path.join(settings.CONFIG_DIR, "games/%s.yml" % lutris_config["configpath"])
+    config_filename = os.path.join(settings.CONFIG_DIR, f"games/{lutris_config["configpath"]}.yml")
     write_yaml_to_file(lutris_config["config"], config_filename)
     game_id = games_db.add_game(
         name=lutris_config["name"],
@@ -1172,4 +1236,4 @@ def import_game(file_path, dest_dir):
         service=lutris_config["service"],
         service_id=lutris_config["service_id"],
     )
-    print("Added game with ID %s" % game_id)
+    print(f"Added game with ID {game_id}")
