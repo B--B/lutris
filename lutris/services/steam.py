@@ -92,10 +92,15 @@ class SteamService(BaseService):
         steamid = get_active_steamid64()
         if not steamid:
             logger.error("Unable to find SteamID from Steam config")
-            return
+            return None
         steam_games = get_steam_library(steamid)
         if not steam_games:
-            raise RuntimeError(_("Failed to load games. Check that your profile is set to public during the sync."))
+            raise RuntimeError(
+                _(
+                    "Failed to load games. Check that your profile is set to public "
+                    "during the sync."
+                    )
+            )
         for steam_game in steam_games:
             if steam_game["appid"] in self.excluded_appids:
                 continue
@@ -109,32 +114,45 @@ class SteamService(BaseService):
 
         if service_game:
             # Copy playtimes from Steam's data
-            for game in get_games(filters={"service": self.id, "service_id": service_game["appid"]}):
-                steam_game_playtime = json.loads(service_game["details"]).get("playtime_forever")
+            for game in get_games(
+                filters={"service": self.id, "service_id": service_game["appid"]}
+            ):
+                steam_game_playtime = (
+                    json.loads(service_game["details"]).get("playtime_forever")
+                )
                 playtime = steam_game_playtime / 60
-                sql.db_update(settings.DB_PATH, "games", {"playtime": playtime}, conditions={"id": game["id"]})
+                sql.db_update(
+                    settings.DB_PATH,
+                    "games",
+                    {"playtime": playtime},
+                    conditions={"id": game["id"]}
+                )
 
     def get_installer_files(self, installer, _installer_file_id, _selected_extras):
         steam_uri = "$STEAM:%s:."
         appid = str(installer.script["game"]["appid"])
-        file = InstallerFile(installer.game_slug, "steam_game", {"url": steam_uri % appid, "filename": appid})
+        file = InstallerFile(
+            installer.game_slug,
+            "steam_game",
+            {"url": steam_uri % appid, "filename": appid}
+        )
         return [file], []
 
     def install_from_steam(self, manifest):
         """Create a new Lutris game based on an existing Steam install"""
         if not manifest.is_installed():
-            return
+            return None
         appid = manifest.steamid
         if appid in self.excluded_appids:
-            return
+            return None
         try:
             service_game = ServiceGameCollection.get_game(self.id, appid)
             if not service_game:
-                return
-            lutris_game_id = "%s-%s" % (self.id, appid)
+                return None
+            lutris_game_id = f"{self.id}-{appid}"
             existing_game = get_game_by_field(lutris_game_id, "installer_slug")
             if existing_game:
-                return
+                return None
             game_config = LutrisConfig().game_level
             game_config["game"]["appid"] = appid
             configpath = write_game_config(lutris_game_id, game_config)
