@@ -7,13 +7,16 @@ from lutris.database import sql
 from lutris.util.log import logger
 from lutris.util.strings import slugify
 
-_SERVICE_CACHE = {}
-_SERVICE_CACHE_ACCESSED = False  # Keep time of last access to have a self degrading cache
-
+cache = {"_ACCESS_TIME": 0, "CACHE": {}}
 
 def get_games(searches=None, filters=None, excludes=None, sorts=None):
     return sql.filtered_query(
-        settings.DB_PATH, "games", searches=searches, filters=filters, excludes=excludes, sorts=sorts
+        settings.DB_PATH,
+        "games",
+        searches=searches,
+        filters=filters,
+        excludes=excludes,
+        sorts=sorts
     )
 
 
@@ -41,23 +44,24 @@ def get_games_where(**conditions):
         if extra_conditions:
             extra_condition = extra_conditions[0]
             if extra_condition == "lessthan":
-                condition_fields.append("{} < ?".format(field))
+                condition_fields.append(f"{field} < ?")
                 condition_values.append(value)
             if extra_condition == "isnull":
-                condition_fields.append("{} is {} null".format(field, "" if value else "not"))
+                condition_fields.append(f"{field} is {'not ' if not value else ''}null")
             if extra_condition == "not":
-                condition_fields.append("{} != ?".format(field))
+                condition_fields.append(f"{field} != ?")
                 condition_values.append(value)
             if extra_condition == "in":
                 if not hasattr(value, "__iter__"):
-                    raise ValueError("Value should be an iterable (%s given)" % value)
+                    raise ValueError(f"Value should be an iterable ({value} given)")
                 if len(value) > 999:
                     raise ValueError("SQLite limited to a maximum of 999 parameters.")
                 if value:
-                    condition_fields.append("{} in ({})".format(field, ", ".join("?" * len(value)) or ""))
+                    placeholders = ", ".join("?" * len(value))
+                    condition_fields.append(f"{field} in ({placeholders})")
                     condition_values = list(chain(condition_values, value))
         else:
-            condition_fields.append("{} = ?".format(field))
+            condition_fields.append(f"{field} = ?")
             condition_values.append(value)
     condition = " AND ".join(condition_fields)
     if condition:
@@ -90,6 +94,7 @@ def get_game_for_service(service, appid):
     existing_games = get_games(filters={"service_id": appid, "service": service})
     if existing_games:
         return existing_games[0]
+    return None
 
 
 def get_all_installed_game_for_service(service):
@@ -100,26 +105,32 @@ def get_all_installed_game_for_service(service):
     db_games = get_games(filters={"service": service, "installed": 1})
     return {g["service_id"]: g for g in db_games}
 
-
 def get_service_games(service):
     """Return the list of all installed games for a service"""
-    global _SERVICE_CACHE_ACCESSED
-    previous_cache_accessed = _SERVICE_CACHE_ACCESSED or 0
-    _SERVICE_CACHE_ACCESSED = time.time()
-    if service not in _SERVICE_CACHE or _SERVICE_CACHE_ACCESSED - previous_cache_accessed > 1:
-        if service == "lutris":
-            _SERVICE_CACHE[service] = [game["slug"] for game in get_games(filters={"installed": "1"})]
-        else:
-            _SERVICE_CACHE[service] = [
-                game["service_id"] for game in get_games(filters={"service": service, "installed": "1"})
-            ]
-    return _SERVICE_CACHE[service]
 
+    previous_cache_accessed = cache["_ACCESS_TIME"] or 0
+    current_time = time.time()
+    cache_hit = service in cache["CACHE"] and current_time - previous_cache_accessed <= 60
+
+    if not cache_hit:
+        if service == "lutris":
+            cache["CACHE"][service] = [
+                game["slug"] for game in get_games(filters={"installed": "1"})
+            ]
+        else:
+            cache["CACHE"][service] = [
+                game["service_id"]
+                for game in get_games(filters={"service": service, "installed": "1"})
+            ]
+
+        cache["_ACCESS_TIME"] = current_time
+
+    return cache["CACHE"][service]
 
 def get_game_by_field(value, field="slug"):
     """Query a game based on a database field"""
     if field not in ("slug", "installer_slug", "id", "configpath", "name"):
-        raise ValueError("Can't query by field '%s'" % field)
+        raise ValueError(f"Can't query by field '{field}'")
     game_result = sql.db_select(settings.DB_PATH, "games", condition=(field, value))
     if game_result:
         return game_result[0]
@@ -198,7 +209,10 @@ def get_matching_game(params):
             if game["configpath"] == params.get("configpath"):
                 return game["id"]
         else:
-            if game["runner"] == params.get("runner") or not all([params.get("runner"), game["runner"]]):
+            if game["runner"] == (
+                params.get("runner")
+                or not all([params.get("runner"), game["runner"]])
+            ):
                 return game["id"]
     return None
 
@@ -221,7 +235,8 @@ def get_used_platforms():
     """Return a list of platforms currently in use"""
     with sql.db_cursor(settings.DB_PATH) as cursor:
         query = (
-            "select distinct platform from games " "where platform is not null and platform is not '' order by platform"
+            "select distinct platform from games "
+            "where platform is not null and platform is not '' order by platform"
         )
         rows = cursor.execute(query)
         results = rows.fetchall()
@@ -232,3 +247,4 @@ def get_game_count(param, value):
     res = sql.db_select(settings.DB_PATH, "games", fields=("COUNT(id)",), condition=(param, value))
     if res:
         return res[0]["COUNT(id)"]
+    return None
