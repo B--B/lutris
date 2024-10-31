@@ -25,13 +25,11 @@ WINE_PATHS: Dict[str, str] = {
 # Insert additional system-wide Wine installations.
 try:
     if system.path_exists("/usr/lib"):
-        for _candidate in os.listdir("/usr/lib/"):
-            if _candidate.startswith("wine-"):
-                _wine_path = os.path.join("/usr/lib/", _candidate, "bin/wine")
-                if os.path.isfile(_wine_path):
-                    WINE_PATHS["System " + _candidate] = _wine_path
-    _candidate = None
-    _wine_path = None
+        for candidate in os.listdir("/usr/lib/"):
+            if candidate.startswith("wine-"):
+                system_wine_path = os.path.join("/usr/lib/", candidate, "bin/wine")
+                if os.path.isfile(system_wine_path):
+                    WINE_PATHS["System " + candidate] = system_wine_path
 except Exception as ex:
     logger.exception("Unable to enumerate system Wine versions: %s", ex)
 
@@ -60,7 +58,7 @@ def is_prefix_directory(prefix_path: str) -> bool:
 def detect_prefix_arch(prefix_path: str) -> str:
     """Return the architecture of the prefix found in `prefix_path`"""
     if not is_prefix_directory(prefix_path):
-        raise RuntimeError("Prefix not found: %s" % prefix_path)
+        raise RuntimeError(f"Prefix not found: {prefix_path}")
 
     prefix_path = os.path.expanduser(prefix_path)
     registry_path = os.path.join(prefix_path, "system.reg")
@@ -71,7 +69,10 @@ def detect_prefix_arch(prefix_path: str) -> str:
                 return "win64"
             if "win32" in line:
                 return "win32"
-    logger.error("Failed to detect Wine prefix architecture in %s; defaulting to 32-bit.", prefix_path)
+    logger.error(
+        "Failed to detect Wine prefix architecture in %s; defaulting to 32-bit.",
+        prefix_path
+    )
     return "win32"
 
 
@@ -79,7 +80,7 @@ def set_drive_path(prefix: str, letter: str, path: str) -> None:
     """Changes the path to a Wine drive"""
     dosdevices_path = os.path.join(prefix, "dosdevices")
     if not system.path_exists(dosdevices_path):
-        raise OSError("Invalid prefix path %s" % prefix)
+        raise OSError(f"Invalid prefix path {prefix}")
     drive_path = os.path.join(dosdevices_path, letter + ":")
     if system.path_exists(drive_path):
         os.remove(drive_path)
@@ -127,8 +128,11 @@ def list_lutris_wine_versions() -> List[str]:
 @cache_single
 def get_installed_wine_versions() -> List[str]:
     """Return the list of Wine versions installed"""
-    return list_system_wine_versions() + proton.list_proton_versions() + list_lutris_wine_versions()
-
+    return (
+        list_system_wine_versions()
+        + proton.list_proton_versions()
+        + list_lutris_wine_versions()
+    )
 
 def clear_wine_version_cache() -> None:
     get_installed_wine_versions.cache_clear()
@@ -158,10 +162,14 @@ def get_wine_path_for_version(version: str, config: dict = None) -> str:
                     "support if something goes wrong"
                 )
                 return None
-            raise RuntimeError("Custom wine paths are only supported when a configuration is available.")
+            raise RuntimeError(
+                "Custom wine paths are only supported when a configuration is available."
+            )
         wine_path = config.get("custom_wine_path")
         if not wine_path:
-            raise RuntimeError("The 'custom' Wine version can be used only if the custom wine path is set.")
+            raise RuntimeError(
+                "The 'custom' Wine version can be used only if the custom wine path is set."
+            )
         return wine_path
     return os.path.join(WINE_DIR, version, "bin/wine")
 
@@ -253,7 +261,16 @@ def get_overrides_env(overrides: Dict[str, str]) -> str:
     """
     default_overrides = {"winemenubuilder": ""}
     overrides.update(default_overrides)
-    override_buckets = OrderedDict([("n,b", []), ("b,n", []), ("b", []), ("n", []), ("d", []), ("", [])])
+    override_buckets = OrderedDict(
+        [
+            ("n,b", []),
+            ("b,n", []),
+            ("b", []),
+            ("n", []),
+            ("d", []),
+            ("", [])
+        ]
+    )
     for dll, value in overrides.items():
         if not value:
             value = ""
@@ -271,5 +288,5 @@ def get_overrides_env(overrides: Dict[str, str]) -> str:
     for value, dlls in override_buckets.items():
         if not dlls:
             continue
-        override_strings.append("{}={}".format(",".join(sorted(dlls)), value))
+        override_strings.append(f"{','.join(sorted(dlls))}={value}")
     return ";".join(override_strings)
