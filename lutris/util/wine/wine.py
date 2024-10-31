@@ -151,6 +151,13 @@ def get_wine_path_for_version(version: str, config: dict = None) -> str:
         return proton.get_proton_wine_path(version)
     if version == "custom":
         if config is None:
+            allow_custom = settings.read_bool_setting("custom_wine_install", default="False")
+            if allow_custom:
+                logger.info(
+                    "Installation using custom Wine has been enabled, do not ask for "
+                    "support if something goes wrong"
+                )
+                return None
             raise RuntimeError("Custom wine paths are only supported when a configuration is available.")
         wine_path = config.get("custom_wine_path")
         if not wine_path:

@@ -584,6 +584,17 @@ class wine(Runner):
                 ),
             },
             {
+                "option": "custom_wine_install",
+                "type": "bool",
+                "label": _("Install games using custom Wine versions"),
+                "advanced": True,
+                "default": False,
+                "help": _(
+                    "If enabled, this option allows you to install games using a custom "
+                    "version of Wine. May cause game installation problems."
+                ),
+            },
+            {
                 "option": "sandbox",
                 "type": "bool",
                 "section": _("Sandbox"),
