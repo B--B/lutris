@@ -16,7 +16,9 @@ def download_media(media_urls, service_media):
     num_workers = 5
     with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
         future_downloads = {
-            executor.submit(service_media.download, slug, url): slug for slug, url in media_urls.items() if url
+            executor.submit(service_media.download, slug, url): slug
+            for slug, url in media_urls.items()
+            if url
         }
         for future in concurrent.futures.as_completed(future_downloads):
             slug = future_downloads[future]

@@ -45,7 +45,11 @@ class GameListView(Gtk.TreeView, GameView):
         if settings.SHOW_MEDIA:
             self.image_renderer = GridViewCellRendererImage()
             self.media_column = Gtk.TreeViewColumn(
-                "", self.image_renderer, media_paths=COL_MEDIA_PATHS, is_installed=COL_INSTALLED, game_id=COL_ID
+                "",
+                self.image_renderer,
+                media_paths=COL_MEDIA_PATHS,
+                is_installed=COL_INSTALLED,
+                game_id=COL_ID
             )
             self.media_column.set_reorderable(True)
             self.media_column.set_sort_indicator(False)
@@ -98,7 +102,15 @@ class GameListView(Gtk.TreeView, GameView):
         text_cell.set_property("ellipsize", Pango.EllipsizeMode.END)
         return text_cell
 
-    def set_column(self, cell, header, column_id, default_width, always_visible=False, sort_id=None):
+    def set_column(
+        self,
+        cell,
+        header,
+        column_id,
+        default_width,
+        always_visible=False,
+        sort_id=None
+    ):
         column = Gtk.TreeViewColumn(header, cell, markup=column_id)
         column.set_sort_indicator(True)
         column.set_sort_column_id(column_id if sort_id is None else sort_id)
@@ -164,6 +176,7 @@ class GameListView(Gtk.TreeView, GameView):
             menu = GameListColumnToggleMenu(self.get_columns())
             menu.popup_at_pointer(None)
             return True
+        return False
 
     def on_row_activated(self, widget, line=None, column=None):
         """Handles double clicks"""

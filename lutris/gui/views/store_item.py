@@ -37,7 +37,10 @@ class StoreItem:
             appid = self._game_data.get("appid")
             service_id = self._game_data.get("service")
             if appid and service_id:
-                self._cached_installed_game_data = games.get_game_for_service(service_id, appid) or {}
+                self._cached_installed_game_data = (
+                    games.get_game_for_service(service_id, appid)
+                    or {}
+                )
                 self._cached_installed_game_data_loaded = True
 
         return self._cached_installed_game_data
@@ -150,7 +153,11 @@ class StoreItem:
     @property
     def installed_at_text(self):
         """Date of install (textual representation)"""
-        return gtk_safe(time.strftime("%X %x", time.localtime(self.installed_at)) if self.installed_at else "")
+        return gtk_safe(
+            time.strftime("%X %x", time.localtime(self.installed_at))
+            if self.installed_at
+            else ""
+        )
 
     @property
     def lastplayed(self):
@@ -160,7 +167,11 @@ class StoreItem:
     @property
     def lastplayed_text(self):
         """Date of last play (textual representation)"""
-        return gtk_safe(time.strftime("%X %x", time.localtime(self.lastplayed)) if self.lastplayed else "")
+        return gtk_safe(
+            time.strftime("%X %x", time.localtime(self.lastplayed))
+            if self.lastplayed
+            else ""
+        )
 
     @property
     def playtime(self):

@@ -108,16 +108,18 @@ class GameStore(GObject.Object):
         for model_row in self.store:
             if model_row[COL_SLUG] == slug:
                 return model_row
+        return None
 
     def get_row_by_id(self, _id):
         if not _id:
-            return
+            return None
         for model_row in self.store:
             try:
                 if model_row[COL_ID] == str(_id):
                     return model_row
             except TypeError:
-                return
+                return None
+        return None
 
     def remove_game(self, _id):
         """Remove a game from the view."""
@@ -207,7 +209,7 @@ class GameStore(GObject.Object):
                 filters=({"service": self.service_media.service, "appid": game.appid}),
             )
         else:
-            db_games = sql.filtered_query(settings.DB_PATH, "games", filters=({"id": game.id}))
+            db_games = sql.filtered_query(settings.DB_PATH, "games", filters={"id": game.id})
 
         for db_game in db_games:
             GLib.idle_add(self.update, db_game)
