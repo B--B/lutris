@@ -69,7 +69,7 @@ class GameView:
     def popup_contextual_menu(self, view, event):
         """Contextual menu."""
         if event.button != Gdk.BUTTON_SECONDARY:
-            return
+            return False
         current_path = self.get_path_at(event.x, event.y)
         if current_path:
             selection = self.get_selected()
@@ -81,6 +81,7 @@ class GameView:
             contextual_menu = ContextualMenu(game_actions.get_game_actions())
             contextual_menu.popup(event, game_actions)
             return True
+        return False
 
     def get_selected_game_actions(self) -> GameActions:
         return self.get_game_actions_for_paths(self.get_selected())
@@ -168,6 +169,7 @@ class GameView:
                 if w != toplevel and isinstance(w, Gtk.Dialog):
                     if w.get_modal() and w.get_transient_for() == toplevel:
                         return True
+            return False
 
         def animate():
             nonlocal paused, start_time
