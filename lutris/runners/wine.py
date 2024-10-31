@@ -84,7 +84,10 @@ def _get_prefix_warning(config: LutrisConfig, _option_key: str) -> Optional[str]
     if exe and find_prefix(exe):
         return None
 
-    return _("<b>Warning</b> Some Wine configuration options cannot be applied, if no prefix can be found.")
+    return _(
+        "<b>Warning</b> Some Wine configuration options cannot be applied, "
+        "if no prefix can be found."
+    )
 
 
 def _get_dxvk_warning(_config: LutrisConfig, _option_key: str) -> Optional[str]:
@@ -99,13 +102,19 @@ def _get_dxvk_warning(_config: LutrisConfig, _option_key: str) -> Optional[str]:
     return None
 
 
-def _get_simple_vulkan_support_error(config: LutrisConfig, option_key: str, feature: str) -> Optional[str]:
+def _get_simple_vulkan_support_error(
+    config: LutrisConfig,
+    option_key: str,
+    feature: str
+) -> Optional[str]:
     if os.environ.get("LUTRIS_NO_VKQUERY"):
         return None
     if config.runner_config.get(option_key) and not LINUX_SYSTEM.is_vulkan_supported():
         return (
-            _("<b>Error</b> Vulkan is not installed or is not supported by your system, " "%s is not available.")
-            % feature
+            _(
+                "<b>Error</b> Vulkan is not installed or is not supported by your system, "
+                "%s is not available."
+            ) % feature
         )
     return None
 
@@ -122,14 +131,17 @@ def _get_dxvk_version_warning(config: LutrisConfig, _option_key: str) -> Optiona
                 return _(
                     "<b>Warning</b> Lutris has detected that Vulkan API version %s is installed, "
                     "but to use the latest DXVK version, %s is required."
-                ) % (vkquery.format_version(library_api_version), vkquery.format_version(REQUIRED_VULKAN_API_VERSION))
+                ) % (
+                    vkquery.format_version(library_api_version),
+                    vkquery.format_version(REQUIRED_VULKAN_API_VERSION)
+                )
 
             devices = vkquery.get_device_info()
 
             if devices and devices[0].api_version < REQUIRED_VULKAN_API_VERSION:
                 return _(
-                    "<b>Warning</b> Lutris has detected that the best device available ('%s') supports Vulkan API %s, "
-                    "but to use the latest DXVK version, %s is required."
+                    "<b>Warning</b> Lutris has detected that the best device available ('%s') "
+                    "supports Vulkan API %s, but to use the latest DXVK version, %s is required."
                 ) % (
                     devices[0].name,
                     vkquery.format_version(devices[0].api_version),
@@ -144,7 +156,8 @@ def _get_esync_warning(config: LutrisConfig, _option_key: str) -> Optional[str]:
         limits_set = is_esync_limit_set()
         if not limits_set:
             return _(
-                "<b>Warning</b> Your limits are not set correctly. Please increase them as described here:\n"
+                "<b>Warning</b> Your limits are not set correctly. Please increase them as "
+                "described here:\n"
                 "<a href='https://github.com/lutris/docs/blob/master/HowToEsync.md'>"
                 "How-to-Esync (https://github.com/lutris/docs/blob/master/HowToEsync.md)</a>"
             )
@@ -224,8 +237,8 @@ class wine(Runner):
 
     reg_prefix = "HKEY_CURRENT_USER/Software/Wine"
     reg_keys = {
-        "Audio": r"%s/Drivers" % reg_prefix,
-        "MouseWarpOverride": r"%s/DirectInput" % reg_prefix,
+        "Audio": rf"{reg_prefix}/Drivers",
+        "MouseWarpOverride": rf"{reg_prefix}/DirectInput",
         "Desktop": "MANAGED",
         "WineDesktop": "MANAGED",
         "ShowCrashDialog": "MANAGED",
@@ -246,7 +259,7 @@ class wine(Runner):
         self._prefix = prefix
         self._working_dir = working_dir
         self._wine_arch = wine_arch
-        self.dll_overrides = DEFAULT_DLL_OVERRIDES.copy()  # we'll modify this, so we better copy it
+        self.dll_overrides = DEFAULT_DLL_OVERRIDES.copy()  # we'll modify this, so better copy it
 
         def get_wine_version_choices():
             version_choices = [(_("Custom (select executable below)"), "custom")]
@@ -285,7 +298,10 @@ class wine(Runner):
                 "label": _("Custom Wine executable"),
                 "type": "file",
                 "advanced": True,
-                "help": _("The Wine executable to be used if you have " 'selected "Custom" as the Wine version.'),
+                "help": _(
+                    "The Wine executable to be used if you have "
+                    "selected 'Custom' as the Wine version."
+                ),
             },
             {
                 "option": "system_winetricks",
@@ -330,7 +346,8 @@ class wine(Runner):
                 "default": True,
                 "active": True,
                 "help": _(
-                    "Use VKD3D to enable support for Direct3D 12 " "applications by translating their calls to Vulkan."
+                    "Use VKD3D to enable support for Direct3D 12 "
+                    "applications by translating their calls to Vulkan."
                 ),
             },
             {
@@ -369,10 +386,16 @@ class wine(Runner):
                 "section": _("Graphics"),
                 "label": _("Enable DXVK-NVAPI / DLSS"),
                 "type": "bool",
-                "error": lambda c, k: _get_simple_vulkan_support_error(c, k, _("DXVK-NVAPI / DLSS")),
+                "error": lambda c, k: _get_simple_vulkan_support_error(
+                    c,
+                    k,
+                    _("DXVK-NVAPI / DLSS")
+                ),
                 "default": True,
                 "advanced": True,
-                "help": _("Enable emulation of Nvidia's NVAPI and add DLSS support, if available."),
+                "help": _(
+                    "Enable emulation of Nvidia's NVAPI and add DLSS support, if available."
+                ),
             },
             {
                 "option": "dxvk_nvapi_version",
@@ -393,7 +416,8 @@ class wine(Runner):
                 "help": _(
                     "dgvoodoo2 is an alternative translation layer for rendering old games "
                     "that utilize D3D1-7 and Glide APIs. As it translates to D3D11, it's "
-                    "recommended to use it in combination with DXVK. Only 32-bit apps are supported."
+                    "recommended to use it in combination with DXVK. Only 32-bit apps are "
+                    "supported."
                 ),
             },
             {
@@ -439,8 +463,10 @@ class wine(Runner):
                 "default": True,
                 "help": _(
                     "Use FSR to upscale the game window to native resolution.\n"
-                    "Requires Lutris Wine FShack >= 6.13 and setting the game to a lower resolution.\n"
-                    "Does not work with games running in borderless window mode or that perform their own upscaling."
+                    "Requires Lutris Wine FShack >= 6.13 and setting the game to a lower "
+                    "resolution.\n"
+                    "Does not work with games running in borderless window mode or that perform "
+                    "their own upscaling."
                 ),
             },
             {
@@ -495,7 +521,8 @@ class wine(Runner):
                 "default": False,
                 "help": _(
                     "Enables the Windows application's DPI scaling.\n"
-                    "Otherwise, the Screen Resolution option in 'Wine configuration' controls this."
+                    "Otherwise, the Screen Resolution option in 'Wine configuration' "
+                    "controls this."
                 ),
             },
             {
@@ -564,7 +591,8 @@ class wine(Runner):
                     (_("Full (CAUTION: Will cause MASSIVE slowdown)"), "+all"),
                 ],
                 "default": "-all",
-                "help": _("Output debugging information in the game log " "(might affect performance)"),
+                "help": _("Output debugging information in the game log "
+                    "(might affect performance)"),
             },
             {
                 "option": "ShowCrashDialog",
@@ -580,7 +608,8 @@ class wine(Runner):
                 "advanced": True,
                 "default": False,
                 "help": _(
-                    "Automatically disables one of Wine's detected joypad " "to avoid having 2 controllers detected"
+                    "Automatically disables one of Wine's detected joypad "
+                    "to avoid having 2 controllers detected"
                 ),
             },
             {
@@ -623,12 +652,12 @@ class wine(Runner):
         if not get_system_wine_version():
             return _(
                 "<b>Warning</b> Wine is not installed on your system\n\n"
-                "Having Wine installed on your system guarantees that "
-                "Wine builds from Lutris will have all required dependencies.\nPlease "
-                "follow the instructions given in the <a "
-                "href='https://github.com/lutris/docs/blob/master/WineDependencies.md'>Lutris Wiki</a> to "
-                "install Wine."
+                "Having Wine installed on your system guarantees that Wine builds from Lutris "
+                "will have all required dependencies.\n"
+                "Please follow the instructions given in the <a href='https://github.com/lutris"
+                "/docs/blob/master/WineDependencies.md'>Lutris Wiki</a> to install Wine."
             )
+        return None
 
     @property
     def context_menu_entries(self):
@@ -649,7 +678,11 @@ class wine(Runner):
     @property
     def prefix_path(self):
         """Return the absolute path of the Wine prefix. Falls back to default WINE prefix."""
-        _prefix_path = self._prefix or self.game_config.get("prefix") or os.environ.get("WINEPREFIX")
+        _prefix_path = (
+            self._prefix
+            or self.game_config.get("prefix")
+            or os.environ.get("WINEPREFIX")
+        )
         if not _prefix_path and self.game_config.get("exe"):
             # Find prefix from game if we have one
             _prefix_path = find_prefix(self.game_exe)
@@ -707,7 +740,11 @@ class wine(Runner):
     def get_runner_version(self, version: str = None) -> Optional[Dict[str, str]]:
         if not version:
             default_version_info = get_default_wine_runner_version_info()
-            default_version = format_runner_version(default_version_info) if default_version_info else None
+            default_version = (
+                format_runner_version(default_version_info)
+                if default_version_info
+                else None
+            )
             version = self.read_version_from_config(default=default_version)
 
         if version in WINE_PATHS:
@@ -802,7 +839,12 @@ class wine(Runner):
 
         return command
 
-    def is_installed(self, flatpak_allowed: bool = True, version: str = None, fallback: bool = True) -> bool:
+    def is_installed(
+        self,
+        flatpak_allowed: bool = True,
+        version: str = None,
+        fallback: bool = True
+    ) -> bool:
         """Check if Wine is installed.
         If no version is passed, checks if any version of wine is available
         """
@@ -837,7 +879,9 @@ class wine(Runner):
             if not db_game:
                 db_game = get_game_by_field(installer.requires, field="slug")
             if not db_game:
-                raise MisconfigurationError(_("The required game '%s' could not be found.") % installer.requires)
+                raise MisconfigurationError(
+                    _("The required game '%s' could not be found.") % installer.requires
+                )
             game = Game(db_game["id"])
             version = game.config.runner_config["version"]
 
@@ -870,7 +914,9 @@ class wine(Runner):
             if config_version:
                 return config_version, runner_config
 
-        raise UnspecifiedVersionError(_("The runner configuration does not specify a Wine version."))
+        raise UnspecifiedVersionError(
+            _("The runner configuration does not specify a Wine version.")
+        )
 
     @classmethod
     def msi_exec(
@@ -882,7 +928,7 @@ class wine(Runner):
         working_dir=None,
         blocking=False,
     ):
-        msi_args = "/i %s" % msi_file
+        msi_args = f"/i {msi_file}"
         if quiet:
             msi_args += " /q"
         return wineexec(
@@ -1049,13 +1095,20 @@ class wine(Runner):
 
     def prelaunch(self):
         if not get_system_wine_version():
-            logger.warning("Wine is not installed on your system; required dependencies may be missing.")
+            logger.warning(
+                "Wine is not installed on your system; required dependencies may be missing."
+            )
 
         prefix_path = self.prefix_path
         if prefix_path:
             if not system.path_exists(os.path.join(prefix_path, "user.reg")):
                 logger.warning("No valid prefix detected in %s, creating one...", prefix_path)
-                create_prefix(prefix_path, wine_path=self.get_executable(), arch=self.wine_arch, runner=self)
+                create_prefix(
+                    prefix_path,
+                    wine_path=self.get_executable(),
+                    arch=self.wine_arch,
+                    runner=self
+                )
 
             prefix_manager = WinePrefixManager(prefix_path)
             if self.runner_config.get("autoconf_joypad", False):
@@ -1214,11 +1267,16 @@ class wine(Runner):
     def sandbox(self, wine_prefix):
         try:
             if self.runner_config.get("sandbox", True):
-                wine_prefix.enable_desktop_integration_sandbox(desktop_dir=self.runner_config.get("sandbox_dir"))
+                wine_prefix.enable_desktop_integration_sandbox(
+                    desktop_dir=self.runner_config.get("sandbox_dir")
+                )
             else:
                 wine_prefix.restore_desktop_integration()
         except Exception as ex:
-            logger.exception("Failed to setup desktop integration, the prefix may not be valid: %s", ex)
+            logger.exception(
+                "Failed to setup desktop integration, the prefix may not be valid: %s",
+                ex
+            )
 
     def play(self):  # pylint: disable=too-many-return-statements # noqa: C901
         game_exe = self.game_exe
