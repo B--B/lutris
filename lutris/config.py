@@ -13,14 +13,14 @@ from lutris.util.yaml import read_yaml_from_file, write_yaml_to_file
 
 def make_game_config_id(game_slug: str) -> str:
     """Return an unique config id to avoid clashes between multiple games"""
-    return "{}-{}".format(game_slug, int(time.time()))
+    return f"{game_slug}-{int(time.time())}"
 
 
 def write_game_config(game_slug: str, config: dict):
     """Writes a game config to disk"""
     configpath = make_game_config_id(game_slug)
     logger.debug("Writing game config to %s", configpath)
-    config_filename = os.path.join(settings.CONFIG_DIR, "games/%s.yml" % configpath)
+    config_filename = os.path.join(settings.CONFIG_DIR, f"games/{configpath}.yml")
     write_yaml_to_file(config, config_filename)
     return configpath
 
@@ -29,8 +29,8 @@ def duplicate_game_config(game_slug: str, source_config_id: str):
     """Copies an existing configuration file, giving it a new id that this
     function returns."""
     new_config_id = make_game_config_id(game_slug)
-    src_path = os.path.join(settings.CONFIG_DIR, "games/%s.yml" % source_config_id)
-    dest_path = os.path.join(settings.CONFIG_DIR, "games/%s.yml" % new_config_id)
+    src_path = os.path.join(settings.CONFIG_DIR, f"games/{source_config_id}.yml")
+    dest_path = os.path.join(settings.CONFIG_DIR, f"games/{new_config_id}.yml")
     copyfile(src_path, dest_path)
     return new_config_id
 
@@ -107,10 +107,10 @@ class LutrisConfig:
         self.initialize_config()
 
     def __repr__(self):
-        return "LutrisConfig(level=%s, game_config_id=%s, runner=%s)" % (
-            self.level,
-            self.game_config_id,
-            self.runner_slug,
+        return (
+            f"LutrisConfig(level={self.level}, "
+            f"game_config_id={self.game_config_id}, "
+            f"runner={self.runner_slug})"
         )
 
     @property
@@ -121,13 +121,13 @@ class LutrisConfig:
     def runner_config_path(self):
         if not self.runner_slug:
             return None
-        return os.path.join(settings.RUNNERS_CONFIG_DIR, "%s.yml" % self.runner_slug)
+        return os.path.join(settings.RUNNERS_CONFIG_DIR, f"{self.runner_slug}.yml")
 
     @property
     def game_config_path(self):
         if not self.game_config_id:
             return None
-        return os.path.join(settings.CONFIG_DIR, "games/%s.yml" % self.game_config_id)
+        return os.path.join(settings.CONFIG_DIR, f"games/{self.game_config_id}.yml")
 
     def initialize_config(self):
         """Init and load config files"""
@@ -221,7 +221,7 @@ class LutrisConfig:
             config = self.game_level
             config_path = self.game_config_path
         else:
-            raise ValueError("Invalid config level '%s'" % self.level)
+            raise ValueError(f"Invalid config level '{self.level}'")
         # Remove keys with no values from config before saving
         config = {key: value for key, value in config.items() if value}
         logger.debug("Saving %s config to %s", self, config_path)
@@ -248,7 +248,9 @@ class LutrisConfig:
         """Convert the option list to a dict with option name as keys"""
         if options_type == "system":
             options = (
-                sysoptions.with_runner_overrides(self.runner_slug) if self.runner_slug else sysoptions.system_options
+                sysoptions.with_runner_overrides(self.runner_slug)
+                if self.runner_slug
+                else sysoptions.system_options
             )
         else:
             if not self.runner_slug:
