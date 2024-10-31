@@ -158,6 +158,7 @@ class GameListView(Gtk.TreeView, GameView):
             menu = GameListColumnToggleMenu(self.get_columns())
             menu.popup_at_pointer(None)
             return True
+        return False
 
     def on_row_activated(self, widget, line=None, column=None):
         """Handles double clicks"""
