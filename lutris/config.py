@@ -11,24 +11,25 @@ from lutris.util.system import path_exists
 from lutris.util.yaml import read_yaml_from_file, write_yaml_to_file
 
 
-def make_game_config_id(game_slug: str) -> str:
-    """Return an unique config id to avoid clashes between multiple games"""
-    return f"{game_slug}-{int(time.time())}"
-
+def make_game_config_id(game_slug: str, timestamp: int) -> str:
+    """Return a unique config id to avoid clashes between multiple games"""
+    logger.debug("Writing new config for %s with timestamp %s", game_slug, timestamp)
+    return f"{game_slug}-{timestamp}"
 
 def write_game_config(game_slug: str, config: dict):
     """Writes a game config to disk"""
-    configpath = make_game_config_id(game_slug)
+    timestamp = int(time.time())
+    configpath = make_game_config_id(game_slug, timestamp)
     logger.debug("Writing game config to %s", configpath)
     config_filename = os.path.join(settings.CONFIG_DIR, f"games/{configpath}.yml")
     write_yaml_to_file(config, config_filename)
     return configpath
 
-
 def duplicate_game_config(game_slug: str, source_config_id: str):
-    """Copies an existing configuration file, giving it a new id that this
-    function returns."""
-    new_config_id = make_game_config_id(game_slug)
+    """Copies an existing configuration file, giving it a new id that this function returns."""
+    timestamp = int(time.time())
+    new_config_id = make_game_config_id(game_slug, timestamp)
+    logger.debug("Game config dupicated with id %s", new_config_id)
     src_path = os.path.join(settings.CONFIG_DIR, f"games/{source_config_id}.yml")
     dest_path = os.path.join(settings.CONFIG_DIR, f"games/{new_config_id}.yml")
     copyfile(src_path, dest_path)
