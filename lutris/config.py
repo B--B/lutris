@@ -84,6 +84,10 @@ class LutrisConfig:
         else:
             self.runner_slug = runner_slug
 
+        self.game_level = {}
+        self.runner_level = {}
+        self.system_level = {}
+
         # Cascaded config sections (for reading)
         self.game_config = {}
         self.runner_config = {}
@@ -130,14 +134,31 @@ class LutrisConfig:
             return None
         return os.path.join(settings.CONFIG_DIR, f"games/{self.game_config_id}.yml")
 
+    def get_config(self, config_type):
+        """Retrieve configuration based on type (game, runner, system)."""
+        if config_type == "game":
+            path = self.game_config_path
+        elif config_type == "runner":
+            path = self.runner_config_path
+        elif config_type == "system":
+            path = self.system_config_path
+        else:
+            raise ValueError("Invalid config type specified.")
+
+        # Load configuration from file
+        config_data = read_yaml_from_file(path)
+        return config_data
+
     def initialize_config(self):
         """Init and load config files"""
-        self.game_level = {"system": {}, self.runner_slug: {}, "game": {}}
-        self.runner_level = {"system": {}, self.runner_slug: {}}
-        self.system_level = {"system": {}}
-        self.game_level.update(read_yaml_from_file(self.game_config_path))
-        self.runner_level.update(read_yaml_from_file(self.runner_config_path))
-        self.system_level.update(read_yaml_from_file(self.system_config_path))
+        config_levels = {
+            "game": self.game_level,
+            "runner": self.runner_level,
+            "system": self.system_level,
+        }
+
+        for config_type, config_dict in config_levels.items():
+            config_dict.update(self.get_config(config_type))
 
         self.update_cascaded_config()
         self.update_raw_config()
