@@ -253,6 +253,12 @@ class LutrisConfig:
             config_path = self.game_config_path
         else:
             raise ValueError(f"Invalid config level '{self.level}'")
+
+        # Check if the configuration path is valid
+        if config_path is None:
+            logger.warning("Cannot save config: config_path is None for level '%s'", self.level)
+            return
+
         # Remove keys with no values from config before saving
         config = {key: value for key, value in config.items() if value}
         logger.debug("Saving %s config to %s", self, config_path)
