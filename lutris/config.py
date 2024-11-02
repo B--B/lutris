@@ -79,10 +79,12 @@ class LutrisConfig:
 
     def __init__(self, runner_slug: str = None, game_config_id: str = None, level: str = None):
         self.game_config_id = game_config_id
-        if runner_slug:
-            self.runner_slug = str(runner_slug)
-        else:
-            self.runner_slug = runner_slug
+        self.runner_slug = runner_slug
+        self.level = level or (
+            "game" if game_config_id
+            else "runner" if runner_slug
+            else "system"
+        )
 
         self.game_level = {}
         self.runner_level = {}
@@ -100,15 +102,6 @@ class LutrisConfig:
 
         self.raw_config = {}
 
-        # Set config level
-        self.level = level
-        if not level:
-            if game_config_id:
-                self.level = "game"
-            elif runner_slug:
-                self.level = "runner"
-            else:
-                self.level = "system"
         self.initialize_config()
 
     def __repr__(self):
