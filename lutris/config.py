@@ -2,6 +2,7 @@
 
 import os
 import time
+from enum import Enum
 from shutil import copyfile
 
 from lutris import settings, sysoptions
@@ -11,10 +12,18 @@ from lutris.util.system import path_exists
 from lutris.util.yaml import read_yaml_from_file, write_yaml_to_file
 
 
+class ConfigLevel(Enum):
+    """Enum class used for config levels"""
+    GAME = "game"
+    RUNNER = "runner"
+    SYSTEM = "system"
+
+
 def make_game_config_id(game_slug: str, timestamp: int) -> str:
     """Return a unique config id to avoid clashes between multiple games"""
     logger.debug("Writing new config for %s with timestamp %s", game_slug, timestamp)
     return f"{game_slug}-{timestamp}"
+
 
 def write_game_config(game_slug: str, config: dict):
     """Writes a game config to disk"""
@@ -24,6 +33,7 @@ def write_game_config(game_slug: str, config: dict):
     config_filename = os.path.join(settings.CONFIG_DIR, f"games/{configpath}.yml")
     write_yaml_to_file(config, config_filename)
     return configpath
+
 
 def duplicate_game_config(game_slug: str, source_config_id: str):
     """Copies an existing configuration file, giving it a new id that this function returns."""
@@ -77,13 +87,18 @@ class LutrisConfig:
 
     """
 
-    def __init__(self, runner_slug: str = None, game_config_id: str = None, level: str = None):
+    def __init__(
+        self,
+        runner_slug: str = None,
+        game_config_id: str = None,
+        level: ConfigLevel = None
+    ):
         self.game_config_id = game_config_id
         self.runner_slug = runner_slug
         self.level = level or (
-            "game" if game_config_id
-            else "runner" if runner_slug
-            else "system"
+            ConfigLevel.GAME if game_config_id
+            else ConfigLevel.RUNNER if runner_slug
+            else ConfigLevel.SYSTEM
         )
 
         self.game_level = {}
@@ -127,13 +142,13 @@ class LutrisConfig:
             return None
         return os.path.join(settings.CONFIG_DIR, f"games/{self.game_config_id}.yml")
 
-    def get_config(self, config_type):
+    def get_config(self, config_type: ConfigLevel):
         """Retrieve configuration based on type (game, runner, system)."""
-        if config_type == "game":
+        if config_type == ConfigLevel.GAME:
             path = self.game_config_path
-        elif config_type == "runner":
+        elif config_type == ConfigLevel.RUNNER:
             path = self.runner_config_path
-        elif config_type == "system":
+        elif config_type == ConfigLevel.SYSTEM:
             path = self.system_config_path
         else:
             raise ValueError("Invalid config type specified.")
@@ -145,9 +160,9 @@ class LutrisConfig:
     def initialize_config(self):
         """Init and load config files"""
         config_levels = {
-            "game": self.game_level,
-            "runner": self.runner_level,
-            "system": self.system_level,
+            ConfigLevel.GAME: self.game_level,
+            ConfigLevel.RUNNER: self.runner_level,
+            ConfigLevel.SYSTEM: self.system_level,
         }
 
         for config_type, config_dict in config_levels.items():
@@ -157,34 +172,34 @@ class LutrisConfig:
         self.update_raw_config()
 
     def update_cascaded_config(self):
-        if self.system_level.get("system") is None:
-            self.system_level["system"] = {}
+        if self.system_level.get(ConfigLevel.SYSTEM.value) is None:
+            self.system_level[ConfigLevel.SYSTEM.value] = {}
         self.system_config.clear()
-        self.system_config.update(self.get_defaults("system"))
-        self.system_config.update(self.system_level.get("system"))
+        self.system_config.update(self.get_defaults(ConfigLevel.SYSTEM))
+        self.system_config.update(self.system_level.get(ConfigLevel.SYSTEM.value))
 
-        if self.level in ["runner", "game"] and self.runner_slug:
+        if self.level in [ConfigLevel.RUNNER, ConfigLevel.GAME] and self.runner_slug:
             if self.runner_level.get(self.runner_slug) is None:
                 self.runner_level[self.runner_slug] = {}
-            if self.runner_level.get("system") is None:
-                self.runner_level["system"] = {}
+            if self.runner_level.get(ConfigLevel.SYSTEM.value) is None:
+                self.runner_level[ConfigLevel.SYSTEM.value] = {}
             self.runner_config.clear()
-            self.runner_config.update(self.get_defaults("runner"))
+            self.runner_config.update(self.get_defaults(ConfigLevel.RUNNER))
             self.runner_config.update(self.runner_level.get(self.runner_slug))
-            self.merge_to_system_config(self.runner_level.get("system"))
+            self.merge_to_system_config(self.runner_level.get(ConfigLevel.SYSTEM.value))
 
-        if self.level == "game" and self.runner_slug:
-            if self.game_level.get("game") is None:
-                self.game_level["game"] = {}
+        if self.level == ConfigLevel.GAME and self.runner_slug:
+            if self.game_level.get(ConfigLevel.GAME.value) is None:
+                self.game_level[ConfigLevel.GAME.value] = {}
             if self.game_level.get(self.runner_slug) is None:
                 self.game_level[self.runner_slug] = {}
-            if self.game_level.get("system") is None:
-                self.game_level["system"] = {}
+            if self.game_level.get(ConfigLevel.SYSTEM.value) is None:
+                self.game_level[ConfigLevel.SYSTEM.value] = {}
             self.game_config.clear()
-            self.game_config.update(self.get_defaults("game"))
-            self.game_config.update(self.game_level.get("game"))
+            self.game_config.update(self.get_defaults(ConfigLevel.GAME))
+            self.game_config.update(self.game_level.get(ConfigLevel.GAME.value))
             self.runner_config.update(self.game_level.get(self.runner_slug))
-            self.merge_to_system_config(self.game_level.get("system"))
+            self.merge_to_system_config(self.game_level.get(ConfigLevel.SYSTEM.value))
 
     def merge_env(self, new_env):
         """Merge environment variables from a new configuration into the system configuration."""
@@ -209,19 +224,19 @@ class LutrisConfig:
 
     def update_raw_config(self):
         # Select the right level of config
-        if self.level == "game":
+        if self.level == ConfigLevel.GAME:
             raw_config = self.game_level
-        elif self.level == "runner":
+        elif self.level == ConfigLevel.RUNNER:
             raw_config = self.runner_level
         else:
             raw_config = self.system_level
 
         # Load config sections
-        self.raw_system_config = raw_config["system"]
-        if self.level in ["runner", "game"]:
+        self.raw_system_config = raw_config[ConfigLevel.SYSTEM.value]
+        if self.level in [ConfigLevel.RUNNER, ConfigLevel.GAME]:
             self.raw_runner_config = raw_config[self.runner_slug]
-        if self.level == "game":
-            self.raw_game_config = raw_config["game"]
+        if self.level == ConfigLevel.GAME:
+            self.raw_game_config = raw_config[ConfigLevel.GAME.value]
 
         self.raw_config = raw_config
 
@@ -235,13 +250,13 @@ class LutrisConfig:
 
     def save(self):
         """Save configuration file according to its type"""
-        if self.level == "system":
+        if self.level == ConfigLevel.SYSTEM:
             config = self.system_level
             config_path = self.system_config_path
-        elif self.level == "runner":
+        elif self.level == ConfigLevel.RUNNER:
             config = self.runner_level
             config_path = self.runner_config_path
-        elif self.level == "game":
+        elif self.level == ConfigLevel.GAME:
             config = self.game_level
             config_path = self.game_config_path
         else:
@@ -274,9 +289,9 @@ class LutrisConfig:
                 defaults[option] = default
         return defaults
 
-    def options_as_dict(self, options_type: str) -> dict:
+    def options_as_dict(self, options_type: ConfigLevel) -> dict:
         """Convert the option list to a dict with option name as keys"""
-        if options_type == "system":
+        if options_type == ConfigLevel.SYSTEM:
             options = (
                 sysoptions.with_runner_overrides(self.runner_slug)
                 if self.runner_slug
@@ -285,7 +300,8 @@ class LutrisConfig:
         else:
             if not self.runner_slug:
                 return {}
-            attribute_name = options_type + "_options"
+            # Convert options_type to string before concatenating
+            attribute_name = f"{options_type.name.lower()}_options"
 
             try:
                 runner = import_runner(self.runner_slug)
