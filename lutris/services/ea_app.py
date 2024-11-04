@@ -196,6 +196,8 @@ class EAAppService(OnlineService):
             logger.warning("Refreshing EA access token")
             self.fetch_access_token()
             identity_data = self._request_identity()
+        elif identity_data.get("error") == "invalid_oauth_info":
+            return None
         elif "error" in identity_data:
             raise RuntimeError(identity_data["error"])
 
@@ -277,7 +279,10 @@ class EAAppService(OnlineService):
     def get_auth_headers(self):
         """Return headers needed to authenticate HTTP requests"""
         if not self.access_token:
-            raise RuntimeError("User not authenticated to EA")
+            raise RuntimeError(
+                "User not authenticated to EA, wrong EA credentials or\nlogin with "
+                "'remember me' unticked"
+            )
         return {
             "Authorization": f"Bearer {self.access_token}",
             "AuthToken": self.access_token,
