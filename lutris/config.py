@@ -127,6 +127,7 @@ class LutrisConfig:
             self.raw_system_config = {}
 
             self.raw_config = {}
+            self.untouched_raw_config = {}
 
             self.initialize_config()
             self.initialized = True
@@ -249,6 +250,9 @@ class LutrisConfig:
             self.raw_game_config = raw_config[ConfigLevel.GAME.value]
 
         self.raw_config = raw_config
+        self.untouched_raw_config = {
+            key: (value.copy() if isinstance(value, dict) else value) for key, value in raw_config.items()
+        }
 
     def remove(self):
         """Delete the configuration file from disk."""
@@ -282,6 +286,13 @@ class LutrisConfig:
         logger.debug("Saving %s config to %s", self, config_path)
         write_yaml_to_file(config, config_path)
         self.initialize_config()
+
+    def cancel_changes(self):
+        """Restore raw_config to untouched version if there are differences."""
+        if self.raw_config != self.untouched_raw_config:
+            logger.debug("Changes detected, reverting raw_config to untouched version.")
+            self.raw_config = {key: value for key, value in self.untouched_raw_config.items()}
+            self.initialize_config()
 
     def get_defaults(self, options_type):
         """Return a dict of options' default value."""
