@@ -77,45 +77,68 @@ class LutrisConfig:
 
     """
 
-    def __init__(self, runner_slug: str = None, game_config_id: str = None, level: str = None):
-        self.game_config_id = game_config_id
-        if runner_slug:
-            self.runner_slug = str(runner_slug)
-        else:
-            self.runner_slug = runner_slug
+    _instances = {}
 
-        self.game_level = {}
-        self.runner_level = {}
-        self.system_level = {}
-
-        # Cascaded config sections (for reading)
-        self.game_config = {}
-        self.runner_config = {}
-        self.system_config = {}
-
-        # Raw (non-cascaded) sections (for writing)
-        self.raw_game_config = {}
-        self.raw_runner_config = {}
-        self.raw_system_config = {}
-
-        self.raw_config = {}
-
-        # Set config level
-        self.level = level
+    def __new__(cls, runner_slug: str = None, game_config_id: str = None, level: str = None):
+        # Create a unique key for each combination of runner_slug, game_config_id and level
         if not level:
             if game_config_id:
-                self.level = "game"
+                level = "game"
             elif runner_slug:
-                self.level = "runner"
+                level = "runner"
             else:
-                self.level = "system"
-        self.initialize_config()
+                level = "system"
+        key = (runner_slug, game_config_id, level)
+        if key not in cls._instances:
+            instance = super(LutrisConfig, cls).__new__(cls)
+            cls._instances[key] = instance
+            logger.debug("Created new instance with key %s: %s", key, id(instance))
+        else:
+            instance = cls._instances[key]
+            # logger.debug(f"Retrieved existing instance: {id(instance)}")
+        return instance
+
+    def __init__(self, runner_slug: str = None, game_config_id: str = None, level: str = None):
+        # Initialize the instance only if it has not already been initialized
+        if not hasattr(self, "initialized"):
+            self.game_config_id = game_config_id
+            if runner_slug:
+                self.runner_slug = str(runner_slug)
+            else:
+                self.runner_slug = runner_slug
+
+            self.game_level = {}
+            self.runner_level = {}
+            self.system_level = {}
+
+            # Cascaded config sections (for reading)
+            self.game_config = {}
+            self.runner_config = {}
+            self.system_config = {}
+
+            # Raw (non-cascaded) sections (for writing)
+            self.raw_game_config = {}
+            self.raw_runner_config = {}
+            self.raw_system_config = {}
+
+            self.raw_config = {}
+
+            # Set config level
+            self.level = level
+            if not level:
+                if game_config_id:
+                    self.level = "game"
+                elif runner_slug:
+                    self.level = "runner"
+                else:
+                    self.level = "system"
+
+            self.initialize_config()
+            self.initialized = True
 
     def __repr__(self):
-        return "LutrisConfig(level=%s, game_config_id=%s, runner=%s)" % (
-            self.level,
-            self.game_config_id,
-            self.runner_slug,
+        return (
+            f"LutrisConfig(level={self.level}, " f"game_config_id={self.game_config_id}, " f"runner={self.runner_slug})"
         )
 
     @property
