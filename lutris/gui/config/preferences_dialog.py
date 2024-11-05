@@ -205,6 +205,11 @@ class PreferencesDialog(GameDialogCommon):
         self.lutris_config.save()
         self.destroy()
 
+    def on_response(self, _widget, response):
+        if response in (Gtk.ResponseType.CANCEL, Gtk.ResponseType.DELETE_EVENT):
+            self.lutris_config.cancel_changes()
+        super().on_response(_widget, response)
+
     def _set_filter(self, value):
         super()._set_filter(value)
         self.runners_box.filter = value

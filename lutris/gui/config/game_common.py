@@ -809,6 +809,7 @@ class GameDialogCommon(SavableModelessDialog, DialogInstallUIDelegate):
             # Reload the config to clean out any changes we may have made
             if self.game:
                 self.game.reload_config()
+                self.lutris_config.cancel_changes()
         super().on_response(_widget, response)
 
     def is_valid(self):

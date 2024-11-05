@@ -1,6 +1,6 @@
 from gettext import gettext as _
 
-from gi.repository import GObject
+from gi.repository import GObject, Gtk
 
 from lutris.config import LutrisConfig
 from lutris.gui.config.game_common import GameDialogCommon
@@ -34,3 +34,8 @@ class RunnerConfigDialog(GameDialogCommon):
         self.lutris_config.save()
         self.emit("runner-updated", self.runner_name)
         self.destroy()
+
+    def on_response(self, _widget, response):
+        if response in (Gtk.ResponseType.CANCEL, Gtk.ResponseType.DELETE_EVENT):
+            self.lutris_config.cancel_changes()
+        super().on_response(_widget, response)
