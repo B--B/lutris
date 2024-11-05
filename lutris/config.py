@@ -14,6 +14,7 @@ from lutris.util.yaml import read_yaml_from_file, write_yaml_to_file
 
 class ConfigLevel(Enum):
     """Enum class used for config levels"""
+
     GAME = "game"
     RUNNER = "runner"
     SYSTEM = "system"
@@ -87,43 +88,52 @@ class LutrisConfig:
 
     """
 
-    def __init__(
-        self,
-        runner_slug: str = None,
-        game_config_id: str = None,
-        level: ConfigLevel = None
-    ):
-        self.game_config_id = game_config_id
-        self.runner_slug = runner_slug
-        self.level = level or (
-            ConfigLevel.GAME if game_config_id
-            else ConfigLevel.RUNNER if runner_slug
-            else ConfigLevel.SYSTEM
-        )
+    _instances = {}
 
-        self.game_level = {}
-        self.runner_level = {}
-        self.system_level = {}
+    def __new__(cls, runner_slug: str = None, game_config_id: str = None, level: ConfigLevel = None):
+        # Create a unique key for each combination of runner_slug, game_config_id and level
+        key = (runner_slug, game_config_id, level)
+        if key not in cls._instances:
+            instance = super(LutrisConfig, cls).__new__(cls)
+            cls._instances[key] = instance
+            logger.debug(f"Created new instance: {id(instance)}")
+        else:
+            instance = cls._instances[key]
+            # logger.debug(f"Retrieved existing instance: {id(instance)}")
+        return instance
 
-        # Cascaded config sections (for reading)
-        self.game_config = {}
-        self.runner_config = {}
-        self.system_config = {}
+    def __init__(self, runner_slug: str = None, game_config_id: str = None, level: ConfigLevel = None):
+        # Initialize the instance only if it has not already been initialized
+        if not hasattr(self, "initialized"):
+            self.game_config_id = game_config_id
+            self.runner_slug = runner_slug
+            if level is None:
+                self.level = (
+                    ConfigLevel.GAME if game_config_id else ConfigLevel.RUNNER if runner_slug else ConfigLevel.SYSTEM
+                )
 
-        # Raw (non-cascaded) sections (for writing)
-        self.raw_game_config = {}
-        self.raw_runner_config = {}
-        self.raw_system_config = {}
+            self.game_level = {}
+            self.runner_level = {}
+            self.system_level = {}
 
-        self.raw_config = {}
+            # Cascaded config sections (for reading)
+            self.game_config = {}
+            self.runner_config = {}
+            self.system_config = {}
 
-        self.initialize_config()
+            # Raw (non-cascaded) sections (for writing)
+            self.raw_game_config = {}
+            self.raw_runner_config = {}
+            self.raw_system_config = {}
+
+            self.raw_config = {}
+
+            self.initialize_config()
+            self.initialized = True
 
     def __repr__(self):
         return (
-            f"LutrisConfig(level={self.level}, "
-            f"game_config_id={self.game_config_id}, "
-            f"runner={self.runner_slug})"
+            f"LutrisConfig(level={self.level}, " f"game_config_id={self.game_config_id}, " f"runner={self.runner_slug})"
         )
 
     @property
@@ -293,9 +303,7 @@ class LutrisConfig:
         """Convert the option list to a dict with option name as keys"""
         if options_type == ConfigLevel.SYSTEM:
             options = (
-                sysoptions.with_runner_overrides(self.runner_slug)
-                if self.runner_slug
-                else sysoptions.system_options
+                sysoptions.with_runner_overrides(self.runner_slug) if self.runner_slug else sysoptions.system_options
             )
         else:
             if not self.runner_slug:
