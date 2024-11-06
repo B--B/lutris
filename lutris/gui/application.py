@@ -54,6 +54,7 @@ from lutris.services import get_enabled_services
 from lutris.startup import init_lutris, run_all_checks
 from lutris.style_manager import StyleManager
 from lutris.util import datapath, log, system
+from lutris.util.graphics.display_observer import start_monitor_thread
 from lutris.util.http import HTTPError, Request
 from lutris.util.log import file_handler, logger
 from lutris.util.savesync import save_check, show_save_stats, upload_save
@@ -774,6 +775,8 @@ class Application(Gtk.Application):
             # Minimize Lutris if user enabled the option
             if self.can_start_hidden():
                 self.window.hide()
+            # Start xrandr monitor thread
+            start_monitor_thread()
         return 0
 
     def on_settings_changed(self, setting_key, new_value):

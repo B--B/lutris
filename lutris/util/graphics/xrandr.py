@@ -5,6 +5,7 @@ import subprocess
 from collections import namedtuple
 
 from lutris.settings import DEFAULT_RESOLUTION_HEIGHT, DEFAULT_RESOLUTION_WIDTH
+from lutris.util import cache_with_clearing
 from lutris.util.linux import LINUX_SYSTEM
 from lutris.util.log import logger
 from lutris.util.system import read_process_output
@@ -19,6 +20,7 @@ def _get_vidmodes():
     return xrandr_output
 
 
+@cache_with_clearing
 def get_outputs():  # pylint: disable=too-many-locals
     """Return list of namedtuples containing output 'name', 'geometry',
     'rotation' and whether it is the 'primary' display."""
@@ -85,6 +87,7 @@ def turn_off_except(display):
                 xrandr.communicate()
 
 
+@cache_with_clearing
 def get_resolutions():
     """Return the list of supported screen resolutions."""
     resolution_list = []
