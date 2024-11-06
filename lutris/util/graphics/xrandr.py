@@ -2,7 +2,11 @@
 
 import re
 import subprocess
+import threading
+import time
 from collections import namedtuple
+
+import pyudev
 
 from lutris.settings import DEFAULT_RESOLUTION_HEIGHT, DEFAULT_RESOLUTION_WIDTH
 from lutris.util.linux import LINUX_SYSTEM
@@ -170,6 +174,48 @@ def change_resolution(resolution):
                 ]
             ) as xrandr:
                 xrandr.communicate()
+
+
+def reset_cache_on_display_event():
+    """Clear cache when a display event is detected."""
+    _cache["outputs"] = None
+    _cache["resolutions"] = None
+    time.sleep(1)  # Some devices are slow, configuration takes time
+    get_outputs()
+    get_resolutions()
+    logger.info("Display cache reset due to display connection or disconnection.")
+
+
+def device_event_handler(action, device):
+    """Manage device add, remove, and change events."""
+    logger.info("Received event: %s for device %s", action, device.sys_name)
+    if action in {"add", "remove", "change"}:
+        reset_cache_on_display_event()
+
+
+def monitor_display_events():
+    """Monitor udev for display connect/disconnect events and reset cache."""
+    context = pyudev.Context()
+    monitor = pyudev.Monitor.from_netlink(context)
+    monitor.filter_by(subsystem="drm")
+    logger.info("Starting monitor observer...")
+
+    # Wrapper that passes the two arguments
+    def callback_wrapper(device):
+        action = device.action
+        device_event_handler(action, device)
+
+    observer = pyudev.MonitorObserver(monitor, callback=callback_wrapper)
+    observer.start()
+    logger.info("Observer started...")
+
+    observer.join()
+
+
+def start_monitor_thread():
+    """Start monitoring in a separate thread."""
+    monitor_thread = threading.Thread(target=monitor_display_events, daemon=True)
+    monitor_thread.start()
 
 
 class LegacyDisplayManager:  # pylint: disable=too-few-public-methods
