@@ -12,6 +12,9 @@ from lutris.util.system import read_process_output
 Output = namedtuple("Output", ("name", "mode", "position", "rotation", "primary", "rate"))
 
 
+_cache = {"outputs": None, "resolutions": None}
+
+
 def _get_vidmodes():
     """Return video modes from XrandR"""
     xrandr_output = read_process_output([LINUX_SYSTEM.get("xrandr")]).split("\n")
@@ -22,6 +25,10 @@ def _get_vidmodes():
 def get_outputs():  # pylint: disable=too-many-locals
     """Return list of namedtuples containing output 'name', 'geometry',
     'rotation' and whether it is the 'primary' display."""
+    if _cache["outputs"] is not None:
+        # logger.debug("Cache hit for xrandr outputs: %s", _cache["outputs"])
+        return _cache["outputs"]
+
     outputs = []
     logger.debug("Retrieving display outputs")
     vid_modes = _get_vidmodes()
@@ -70,6 +77,9 @@ def get_outputs():  # pylint: disable=too-many-locals
                         )
                     )
                     break
+
+    # Update cache
+    _cache["outputs"] = outputs
     return outputs
 
 
@@ -87,6 +97,10 @@ def turn_off_except(display):
 
 def get_resolutions():
     """Return the list of supported screen resolutions."""
+    if _cache["resolutions"] is not None:
+        # logger.debug("Cache hit for xrandr resolutions: %s", _cache["resolutions"])
+        return _cache["resolutions"]
+
     resolution_list = []
     logger.debug("Retrieving resolution list")
     for line in _get_vidmodes():
@@ -96,8 +110,10 @@ def get_resolutions():
                 resolution_list.append(resolution_match.groups()[0])
     if not resolution_list:
         logger.error("Unable to generate resolution list from xrandr output")
-        return ["%sx%s" % (DEFAULT_RESOLUTION_WIDTH, DEFAULT_RESOLUTION_HEIGHT)]
-    return sorted(set(resolution_list), key=lambda x: int(x.split("x")[0]), reverse=True)
+        _cache["resolutions"] = [f"{DEFAULT_RESOLUTION_WIDTH}x{DEFAULT_RESOLUTION_HEIGHT}"]
+    else:
+        _cache["resolutions"] = sorted(set(resolution_list), key=lambda x: int(x.split("x")[0]), reverse=True)
+    return _cache["resolutions"]
 
 
 def change_resolution(resolution):
