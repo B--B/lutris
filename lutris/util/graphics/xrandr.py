@@ -112,7 +112,11 @@ def change_resolution(resolution):
     if isinstance(resolution, str):
         logger.debug("Switching resolution to %s", resolution)
 
-        if resolution not in get_resolutions():
+        resolutions = get_resolutions()
+        if not isinstance(resolutions, list):
+            logger.error("get_resolutions did not return a valid list")
+            return
+        if resolution not in set(get_resolutions()):
             logger.warning("Resolution %s doesn't exist.", resolution)
         else:
             output_name = get_outputs()[0].name
