@@ -37,8 +37,8 @@ class EAAppGames:
     def iter_installed_games(self):
         if not os.path.exists(self.ea_games_path):
             return
-        for game_folder in os.listdir(self.ea_games_path):
-            yield game_folder
+        # Use yield from to return items directly
+        yield from os.listdir(self.ea_games_path)
 
     def get_installed_games_content_ids(self):
         installed_game_ids = []
