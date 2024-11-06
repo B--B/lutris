@@ -27,6 +27,7 @@ Requires:       python3-dbus
 Requires:       python3-evdev
 Requires:       python3-distro
 Requires:       python3-pillow
+Requires:       python3-pyudev
 Requires:       cabextract
 Requires:       mesa-vulkan-drivers
 Requires:       vulkan-loader
