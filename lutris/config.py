@@ -1,7 +1,6 @@
 """Handle the game, runner and global system configurations."""
 
 import os
-from copy import deepcopy
 from datetime import datetime
 from shutil import copyfile
 
@@ -35,9 +34,6 @@ def duplicate_game_config(game_slug: str, source_config_id: str):
     dest_path = os.path.join(settings.CONFIG_DIR, f"games/{new_config_id}.yml")
     copyfile(src_path, dest_path)
     return new_config_id
-
-
-cache = {"CACHE": {}}
 
 
 class LutrisConfig:
@@ -142,25 +138,15 @@ class LutrisConfig:
         """Retrieve configuration based on type (game, runner, system)."""
         if config_type == "game":
             path = self.game_config_path
-            key = self.game_config_id
         elif config_type == "runner":
             path = self.runner_config_path
-            key = self.runner_slug
         elif config_type == "system":
             path = self.system_config_path
-            key = "system"
         else:
             raise ValueError("Invalid config type specified.")
 
-        # Check cache first
-        if key in cache["CACHE"]:
-            # logger.debug("Cache hit for %s", key)
-            return deepcopy(cache["CACHE"][key])
-
-        # Load configuration from file if not in cache
+        # Load configuration from file
         config_data = read_yaml_from_file(path)
-        cache["CACHE"][key] = deepcopy(config_data)
-        logger.debug("%s config cached", key)
         return config_data
 
     def initialize_config(self):
@@ -259,15 +245,12 @@ class LutrisConfig:
         if self.level == "system":
             config = self.system_level
             config_path = self.system_config_path
-            cache_key = "system"
         elif self.level == "runner":
             config = self.runner_level
             config_path = self.runner_config_path
-            cache_key = self.runner_slug
         elif self.level == "game":
             config = self.game_level
             config_path = self.game_config_path
-            cache_key = self.game_config_id
         else:
             raise ValueError("Invalid config level '%s'" % self.level)
 
@@ -280,12 +263,6 @@ class LutrisConfig:
         config = {key: value for key, value in config.items() if value}
         logger.debug("Saving %s config to %s", self, config_path)
         write_yaml_to_file(config, config_path)
-        # Update cache
-        if cache_key in cache["CACHE"]:
-            del cache["CACHE"][cache_key]
-            logger.debug("Removed old cache for %s", cache_key)
-        cache["CACHE"][cache_key] = deepcopy(config)
-        logger.debug("Updated cache for %s", cache_key)
         self.initialize_config()
 
     def get_defaults(self, options_type):
