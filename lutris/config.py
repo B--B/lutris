@@ -142,6 +142,22 @@ class LutrisConfig:
             f"LutrisConfig(level={self.level}, " f"game_config_id={self.game_config_id}, " f"runner={self.runner_slug})"
         )
 
+    @classmethod
+    def reset_instances(cls, level):
+        """Reset instances to their initial configuration based on the level."""
+        if level == "system":
+            cls._instances.clear()
+            logger.debug("Reset all instances due to a system-level change.")
+        elif level == "runner":
+            keys_to_reset = [key for key in cls._instances if key[1] == "game"]
+            for key in keys_to_reset:
+                del cls._instances[key]
+            logger.debug("Reset game-level instances due to a runner-level change.")
+        elif level == "game":
+            logger.debug("No instances reset required for game-level change.")
+        else:
+            raise ValueError("Invalid level '%s' specified for reset_instances" % level)
+
     @property
     def system_config_path(self):
         return os.path.join(settings.CONFIG_DIR, "system.yml")
@@ -291,6 +307,8 @@ class LutrisConfig:
         logger.debug("Saving %s config to %s", self, config_path)
         write_yaml_to_file(config, config_path)
         self.initialize_config()
+        # Reset instances and propagate changes if needed
+        self.reset_instances(self.level)
 
     def cancel_changes(self):
         """Compare raw_config with untouched version and initialize config if there are differences."""
