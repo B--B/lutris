@@ -6,7 +6,13 @@ from gettext import gettext as _
 
 from lutris import runners
 from lutris.util import linux, system
-from lutris.util.display import DISPLAY_MANAGER, SCREEN_SAVER_INHIBITOR, is_compositing_enabled, is_display_x11
+from lutris.util.display import (
+    DISPLAY_MANAGER,
+    SCREEN_SAVER_INHIBITOR,
+    is_compositing_enabled,
+    is_display_x11,
+    is_plasma_desktop,
+)
 from lutris.util.graphics.gpu import GPUS
 
 
@@ -146,9 +152,9 @@ system_options = [  # pylint: disable=invalid-name
         "type": "bool",
         "default": False,
         "advanced": True,
-        "visible": is_display_x11,
+        "visible": is_display_x11 and not is_plasma_desktop(),
         "condition": is_compositing_enabled,
-        "help": _("Disable desktop effects while game is running, " "reducing stuttering and increasing performance"),
+        "help": _("Disable desktop effects while game is running, reducing stuttering and increasing performance"),
     },
     {
         "section": _("Display"),

@@ -226,6 +226,12 @@ def get_desktop_environment():
     return DesktopEnvironment.UNKNOWN
 
 
+@cache_single
+def is_plasma_desktop():
+    desktop_session = os.environ.get("DESKTOP_SESSION", "").lower()
+    return "plasma" in desktop_session
+
+
 def _get_command_output(command):
     """Some rogue function that gives no shit about residing in the correct module"""
     try:
