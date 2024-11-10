@@ -43,3 +43,28 @@ def cache_single(function):
 
     wrapper.cache_clear = cache_clear
     return wrapper
+
+
+def cache_with_clearing(function):
+    """Cache decorator for a function that caches a single result,
+    and allows clearing of a specific cache entry by key."""
+    cache = {}
+
+    @wraps(function)
+    def wrapper(*args, **kwargs):
+        key = (tuple(args), tuple(sorted(kwargs.items())))
+
+        if key not in cache:
+            cache[key] = function(*args, **kwargs)
+
+        return cache[key]
+
+    def cache_clear(key=None):
+        """Clear the cache for a specific key or the entire cache if no key is provided."""
+        if key is None:
+            cache.clear()
+        else:
+            cache.pop(key, None)
+
+    wrapper.cache_clear = cache_clear
+    return wrapper
