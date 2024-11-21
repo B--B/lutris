@@ -15,7 +15,7 @@ datadir = get_option('datadir')
 localedir = get_option('localedir')
 mandir = get_option('mandir')
 lutrisdir = join_paths(pylibdir, 'lutris')
-podir = join_paths(meson.source_root(), 'po')
+podir = join_paths(meson.current_source_dir(), 'po')
 
 # Generate configuration files
 config = configuration_data()
