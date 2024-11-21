@@ -1,7 +1,7 @@
 project(
   'lutris',
   license: 'GPL-3.0-or-later',
-  meson_version: '>=0.46.0',
+  meson_version: '>=1.4.0',
 )
 
 # Find Python installation
