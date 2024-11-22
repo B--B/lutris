@@ -3,7 +3,7 @@
 # Standard Library
 import json
 import os
-from xml.etree import ElementTree
+from lxml import etree
 
 # Lutris Modules
 from lutris import settings
@@ -61,35 +61,44 @@ def is_system(machine):
 def iter_machines(xml_path, filter_func=None):
     """Iterate through machine nodes in the MAME XML"""
     try:
-        root = ElementTree.parse(xml_path).getroot()
+        context = etree.iterparse(xml_path, events=("end",), tag="machine")
+        for _, machine in context:
+            if filter_func and not filter_func(machine):
+                continue
+            yield machine
+            machine.clear()  # Release memory for the processed node
+        del context  # Clean context at the end
     except Exception as ex:  # pylint: disable=broad-except
         logger.error("Failed to read MAME XML: %s", ex)
         return []
-    for machine in root:
-        if filter_func and not filter_func(machine):
-            continue
-        yield machine
 
 
 def get_machine_info(machine):
     """Return human readable information about a machine node"""
+
+    def attrib_to_dict(element):
+        """Convert lxml _Attrib to a Python dictionary"""
+        return dict(element.attrib) if element is not None else {}
+
     return {
-        "description": machine.find("description").text,
-        "manufacturer": simplify_manufacturer(machine.find("manufacturer").text),
-        "year": machine.find("year").text,
-        "roms": [rom.attrib for rom in machine.findall("rom")],
-        "ports": [port.attrib for port in machine.findall("port")],
+        "description": machine.find("description").text if machine.find("description") is not None else None,
+        "manufacturer": simplify_manufacturer(
+            machine.find("manufacturer").text if machine.find("manufacturer") is not None else None
+        ),
+        "year": machine.find("year").text if machine.find("year") is not None else None,
+        "roms": [attrib_to_dict(rom) for rom in machine.findall("rom")],
+        "ports": [attrib_to_dict(port) for port in machine.findall("port")],
         "devices": [
             {
-                "info": device.attrib,
+                "info": attrib_to_dict(device),
                 "name": "".join([instance.attrib["name"] for instance in device.findall("instance")]),
                 "briefname": "".join([instance.attrib["briefname"] for instance in device.findall("instance")]),
                 "extensions": [extension.attrib["name"] for extension in device.findall("extension")],
             }
             for device in machine.findall("device")
         ],
-        "input": machine.find("input").attrib,
-        "driver": machine.find("driver").attrib,
+        "input": attrib_to_dict(machine.find("input")),
+        "driver": attrib_to_dict(machine.find("driver")),
     }
 
 
@@ -126,10 +135,7 @@ def cache_supported_systems(xml_path, force=False):
         logger.info("Cache already exists and force is not set. Skipping update.")
         return
 
-    systems = {
-        machine.attrib["name"]: get_machine_info(machine)
-        for machine in iter_machines(xml_path, is_system)
-    }
+    systems = {machine.attrib["name"]: get_machine_info(machine) for machine in iter_machines(xml_path, is_system)}
     if not systems:
         logger.warning("No systems found to cache.")
         return
