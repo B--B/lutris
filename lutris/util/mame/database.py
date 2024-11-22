@@ -116,6 +116,32 @@ def get_supported_systems(xml_path, force=False):
     return systems
 
 
+def cache_supported_systems(xml_path, force=False):
+    """
+    Create or update the cache of supported systems.
+    Populates the cache file with runnable, non-clone systems that can run software.
+    """
+    systems_cache_path = os.path.join(CACHE_DIR, "systems.json")
+    if os.path.exists(systems_cache_path) and not force:
+        logger.info("Cache already exists and force is not set. Skipping update.")
+        return
+
+    systems = {
+        machine.attrib["name"]: get_machine_info(machine)
+        for machine in iter_machines(xml_path, is_system)
+    }
+    if not systems:
+        logger.warning("No systems found to cache.")
+        return
+
+    try:
+        with open(systems_cache_path, "w", encoding="utf-8") as systems_cache_file:
+            json.dump(systems, systems_cache_file, indent=2)
+        logger.info("Cache successfully created at %s", systems_cache_path)
+    except (IOError, OSError) as e:
+        logger.error("Failed to write systems cache: %s", e)
+
+
 def get_games(xml_path):
     """Return a list of all games"""
     return {machine.attrib["name"]: get_machine_info(machine) for machine in iter_machines(xml_path, is_game)}

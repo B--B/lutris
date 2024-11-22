@@ -9,7 +9,7 @@ from lutris.runners.runner import Runner
 from lutris.util import system
 from lutris.util.jobs import AsyncCall
 from lutris.util.log import logger
-from lutris.util.mame.database import get_supported_systems
+from lutris.util.mame.database import get_supported_systems, cache_supported_systems
 from lutris.util.strings import split_arguments
 
 MAME_CACHE_DIR = os.path.join(settings.CACHE_DIR, "mame")
@@ -240,8 +240,12 @@ class mame(Runner):  # pylint: disable=invalid-name
         def on_runner_installed(*args):
             def on_mame_ready(result, error):
                 notify_mame_xml(result, error)
-                if callback:
-                    callback(*args)
+
+                def on_cache_ready(*_):
+                    if callback:
+                        callback(*args)
+
+                AsyncCall(cache_supported_systems, on_cache_ready, MAME_XML_PATH, force=True)
 
             AsyncCall(write_mame_xml, on_mame_ready)
 
